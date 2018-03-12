@@ -1,7 +1,9 @@
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
+import org.json.simple.JSONObject;
 
 import javax.swing.*;
 
@@ -12,7 +14,9 @@ public class Registration implements ConnectionListener, LoginChecker {
     @FXML private TextField password1;
     @FXML private Button btnRegister;
     @FXML private void initialize() {
-        SceneManager.getInstance().send(this, "/test");
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.TEST);
+        SceneManager.getInstance().send(this, message);
     }
     @FXML private void switchToAuthentication () { SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.AUTHENTICATION); }
     @FXML private void checkNewUserName() { checkNewUserName(null, username.getText());}
@@ -41,31 +45,37 @@ public class Registration implements ConnectionListener, LoginChecker {
     @Override
     public void onInput(Session session, Object input) {
 
-        switch ((String)input) {
-            case "/username_ok":
-                break;
-            case "/username_rejected":
-                JOptionPane.showConfirmDialog(null,
-                        "Пользователь с таким именем уже есть",
-                        "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
-                username.clear();
-                break;
-            case "/login_rejected":
-                //TODO
-                JOptionPane.showMessageDialog(null, "Что-то пошло не так...",
-                        "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
-                username.clear();
-                password.clear();
-                password1.clear();
-                break;
-            case "/welcome":
-                JOptionPane.showMessageDialog(null, "Вы успешно зарегистрированы!!!",
-                        "Регистрация пользователя", JOptionPane.INFORMATION_MESSAGE);
-                SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WORK);
-                break;
-            default:
-                System.out.println("--------THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND IN CLIENT'S REGISTRATION SCREEN");
-        }
+        Platform.runLater(()-> {
+
+            if (input instanceof JSONObject) {
+
+                JSONObject json = (JSONObject) input;
+                Commands cmd = (Commands) json.get(Commands.REPLY);
+
+                switch (cmd) {
+                    case ADMITTED:
+                        JOptionPane.showMessageDialog(null, "Вы успешно зарегистрированы!!!",
+                                "Регистрация пользователя", JOptionPane.INFORMATION_MESSAGE);
+                        SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WORK);
+                        break;
+                    case FAIL:
+                        JOptionPane.showMessageDialog(null,
+                                json.getOrDefault(Commands.FAIL_DETAILS,
+                                        "Невозможно зарегистрировать пользователя с указанными данными"),
+                                "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
+                        username.clear();
+                        password.clear();
+                        password1.clear();
+                        break;
+                    case OK:
+                    case USERNAME_OK:
+                        break;
+                    default:
+                        System.out.println("--------THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND IN CLIENT'S REGISTRATION SCREEN");
+                }
+            } else System.out.println("--------THIS SHOULD NOT HAPPEN - " +
+                    "UNKNOWN TYPE OF INCOMING MESSAGE IN CLIENT'S REGISTRATION SCREEN");
+        });
     }
 
     @Override
@@ -88,15 +98,25 @@ public class Registration implements ConnectionListener, LoginChecker {
         if (isUsernameOK(username.getText())
                 && isPasswordOK(password.getText())
                 && (password1.getText().equals(password.getText()))) {
-            SceneManager.getInstance().send(this,
-                    "/signUp " + username.getText() + " " + password.getText());
+
+            JSONObject message = new JSONObject();
+            message.put(Commands.REQUEST, Commands.SIGN_UP);
+            message.put(Commands.USERNAME, user);
+            message.put(Commands.PASSWORD, pwd);
+            SceneManager.getInstance().send(this, message);
+
         } else System.out.println("------SMTH WENT WRONG IN REGISTRATION SCREEN");
     }
 
     @Override
     public void checkNewUserName(Session session, String newName) {
         if (isUsernameOK(newName)) {
-            SceneManager.getInstance().send(this, "/newUser " + username.getText());
+
+            JSONObject message = new JSONObject();
+            message.put(Commands.REQUEST, Commands.CHECK_NEW_USER_NAME);
+            message.put(Commands.USERNAME, newName);
+            SceneManager.getInstance().send(this, message);
+
         } else {
             JOptionPane.showConfirmDialog(null,
                     "Пожалуйста, придумайте имя пользователя, состоящее только из строчных букв латинского алфавита и цифр",

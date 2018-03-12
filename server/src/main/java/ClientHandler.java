@@ -1,3 +1,5 @@
+import org.json.simple.JSONObject;
+
 import java.io.File;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -27,55 +29,52 @@ public class ClientHandler implements ConnectionListener {
     @Override
     public void onInput(Session session, Object input) {
 
-        if(input instanceof String) {
+        if (input instanceof JSONObject) {
 
-            System.out.println("Server - "+ session + ": incoming message identified as String: " + input);
+            JSONObject json = (JSONObject)input;
+            Commands cmd = (Commands)json.get(Commands.REQUEST);
 
-            String[] tokens = ((String)input).split(" ");
-
-            switch (tokens[0]) {
-
-                case "/delete":
-                    delete(tokens[1]);
+            switch (cmd) {
+                case CHECK_NEW_USER_NAME:
+                    checkNewUserName((String)json.get(Commands.USERNAME));
                     break;
-                case "/dirDown":
-                    directoryDown(tokens[1]);
+                case CREATE_DIRECTORY:
+                    createDirectory((String)json.get(Commands.DIRECTORY_NAME));
                     break;
-                case "/dirUp":
+                case DELETE:
+                    delete((String)json.get(Commands.FILE_NAME));
+                    break;
+                case DIRECTORY_DOWN:
+                    directoryDown((String)json.get(Commands.DIRECTORY_NAME));
+                    break;
+                case DIRECTORY_UP:
                     directoryUp();
                     break;
-                case "/download":
-                    downloadFile(tokens[1]);
+                case DOWNLOAD:
+                    downloadFile((String)json.get(Commands.FILE_NAME));
                     break;
-                case "/list":
+                case LIST_CONTENTS:
                     listFiles();
                     break;
-                case "/newDir":
-                    createDirectory(tokens[1]);
+                case RENAME:
+                    rename((String)json.get(Commands.FILE_NAME), (String)json.get(Commands.NEW_FILE_NAME));
                     break;
-                case "/newUser":
-                    checkNewUserName(tokens[1]);
+                case SIGN_IN:
+                    signIn((String)json.get(Commands.USERNAME), (String)json.get(Commands.PASSWORD));
                     break;
-                case "/rename":
-                    rename(tokens[1], tokens[2]);
+                case SIGN_UP:
+                    signUp((String)json.get(Commands.USERNAME), (String)json.get(Commands.PASSWORD));
                     break;
-                case "/signIn":
-                    signIn(tokens[1], tokens[2]);
-                    break;
-                case "/signUp":
-                    signUp(tokens[1], tokens[2]);
-                    break;
-                case "/test":
-                    send("/ok");
+                case TEST:
+                    JSONObject message = new JSONObject();
+                    message.put(Commands.REPLY, Commands.OK);
+                    session.send(message);
                     break;
                 default:
                     server.log(session, "Server - THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM USER");
-
             }
 
         } else if (input instanceof File){
-
-            System.out.println("Server - "+ session + ": incoming message identified as File: " + input);
             uploadFile((File)input);
 
         } else {
@@ -93,44 +92,64 @@ public class ClientHandler implements ConnectionListener {
     }
 
     private void signIn(String user, String password) {
+        JSONObject message = new JSONObject();
         if( server.getAuthService().loginAccepted(user,password)) {
             activeDirectory = activeDirectory.resolve(user);
             if (FileProcessor.fileExists(activeDirectory)) {
-                send("/welcome");
-                listFiles();
+                message.put(Commands.REPLY, Commands.ADMITTED);
             } else {
-                send("/fail ProblemConnectingToRepository");
-                server.log(session,"ERROR - USER DIRECTORY IS MISSING - USER IS AUTHORIZED BUT CANNOT ACCESS HIS REPOSITORY !!!");
+                message.put(Commands.REPLY, Commands.FAIL);
+                message.put(Commands.FAIL_DETAILS, "Ошибка подключения к удаленному репозиторию");
+                server.log(session,"FAIL - USER DIRECTORY IS MISSING - " +
+                        "USER IS AUTHORIZED BUT CANNOT ACCESS HIS REPOSITORY !!!");
             }
         } else {
-            send("/login_rejected");
+            message.put(Commands.REPLY, Commands.NOT_ADMITTED);
         }
+        send(message);
+        //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном авторизации, а не главным
+        send(message);
     }
 
     private void signUp(String user, String password) {
+        JSONObject message = new JSONObject();
         if (server.getAuthService().registerNewUser(user, password)) {
             activeDirectory = SERVER_ROOT.resolve(user);
             try {
                 FileProcessor.createDirectory(activeDirectory);
-                send("/welcome");
-                listFiles();
+                message.put(Commands.REPLY, Commands.ADMITTED);
             } catch (FileProcessorException e) {
-                send("/fail");
+                message.put(Commands.REPLY, Commands.FAIL);
+                message.put(Commands.FAIL_DETAILS, "Ошибка соединения. Повторите попытку позднее");
+                server.log(session,"FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
             }
-        } else send("/login_rejected");
+        } else {
+            message.put(Commands.REPLY, Commands.NOT_ADMITTED);
+        }
+        send(message);
+        //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном регистрации, а не главным
+        send(message);
     }
 
     private void checkNewUserName(String name) {
-        if (server.getAuthService().newUserNameAccepted(name))
-            send("/username_ok");
-        else send ("/username_rejected");
+        JSONObject message = new JSONObject();
+        if (server.getAuthService().newUserNameAccepted(name)) {
+            message.put(Commands.REPLY, Commands.USERNAME_OK);
+        } else {
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, "Пользователь с таким именем уже есть");
+        }
+        send(message);
     }
 
     private void uploadFile(File input) {
         try {
             FileProcessor.saveFile(activeDirectory, input);
         } catch (FileProcessorException e) {
-            send("/fail " + e.getMessage());
+            JSONObject message = new JSONObject();
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, e.getMessage());
+            send(message);
         }
         listFiles();
     }
@@ -140,7 +159,10 @@ public class ClientHandler implements ConnectionListener {
         if (file.exists()) {
             if (file.isFile()) session.send(file);
         } else {
-            send("/notfound");
+            JSONObject message = new JSONObject();
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, "Файл не найден");
+            send(message);
         }
     }
 
@@ -148,7 +170,10 @@ public class ClientHandler implements ConnectionListener {
         try {
             FileProcessor.rename(activeDirectory.resolve(oldName), newName);
         } catch (FileProcessorException e){
-            send("/fail " + e.getMessage());
+            JSONObject message = new JSONObject();
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, e.getMessage());
+            send(message);
         }
         listFiles();
     }
@@ -157,7 +182,10 @@ public class ClientHandler implements ConnectionListener {
         try {
             FileProcessor.delete(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
-            send("/fail " + e.getMessage());
+            JSONObject message = new JSONObject();
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, e.getMessage());
+            send(message);
         }
         listFiles();
     }
@@ -166,7 +194,10 @@ public class ClientHandler implements ConnectionListener {
         try {
             FileProcessor.createDirectory(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
-            send("/fail " + e.getMessage());
+            JSONObject message = new JSONObject();
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, e.getMessage());
+            send(message);
         }
         listFiles();
     }
@@ -185,10 +216,13 @@ public class ClientHandler implements ConnectionListener {
 
         if(Files.exists(target) && Files.isDirectory(target)) {
             activeDirectory = target;
-            listFiles();
         } else {
-            send("/notfound");
+            JSONObject message = new JSONObject();
+            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, "Путь не найден");
+            send(message);
         }
+        listFiles();
     }
 
     private void listFiles() {
