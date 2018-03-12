@@ -1,8 +1,14 @@
 public enum Commands {
 
+    REQUEST,
+    REPLY,
+
     DELETE,
     RENAME,
     DOWNLOAD,
+    FILE_NAME,
+    NEW_FILE_NAME,
+    DIRECTORY_NAME,
 
     LIST_CONTENTS,
     DIRECTORY_DOWN,
@@ -11,10 +17,16 @@ public enum Commands {
 
     SIGN_IN,
     SIGN_UP,
-    VALIDATE_NEW_USER_NAME,
+    CHECK_NEW_USER_NAME,
+    USERNAME,
+    PASSWORD,
 
     TEST,
     OK,
-    FAIL;
+    FAIL,
+    FAIL_DETAILS,
+    ADMITTED,
+    NOT_ADMITTED,
+    USERNAME_OK
 
 }

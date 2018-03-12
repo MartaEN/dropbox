@@ -6,6 +6,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
+import org.json.simple.JSONObject;
 
 import javax.swing.*;
 import java.io.File;
@@ -23,6 +24,7 @@ public class Client implements ConnectionListener, FileManager {
     @FXML private TableColumn<MyFile, String> colSize;
 
     @FXML private void initialize() {
+
         colType.setCellValueFactory(new PropertyValueFactory<MyFile, String>("type"));
         colName.setCellValueFactory(new PropertyValueFactory<MyFile, String>("name"));
         colSize.setCellValueFactory(new PropertyValueFactory<MyFile, String>("size"));
@@ -35,7 +37,9 @@ public class Client implements ConnectionListener, FileManager {
             }
         }
 
-        SceneManager.getInstance().send(this, "/list");
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.LIST_CONTENTS);
+        SceneManager.getInstance().send(this, message);
     }
 
     private final Path ROOT = Paths.get("_client_downloads"); // TODO добавить возможность выбора клиентом
@@ -49,23 +53,18 @@ public class Client implements ConnectionListener, FileManager {
         Platform.runLater(()-> {
 
             // обрабатываем служебные сообщения с сервера
-            if (input instanceof String) {
+            if (input instanceof JSONObject) {
 
-                System.out.println("client - incoming message identified as String: "+ input);
+                JSONObject json = (JSONObject)input;
+                Commands cmd = (Commands)json.get(Commands.REPLY);
 
-                String[] tokens = ((String) input).split(" ");
-                switch (tokens[0]) {
-                    case "/notfound":
+                switch (cmd) {
+                    case FAIL:
                         JOptionPane.showConfirmDialog(null,
-                                "Файл не найден",
+                                json.getOrDefault(Commands.FAIL_DETAILS, "Что-то пошло не так..."),
                                 "Не удалось выполнить операцию", JOptionPane.WARNING_MESSAGE);
                         break;
-                    case "/ok":
-                        break;
-                    case "/fail":
-                        JOptionPane.showConfirmDialog(null,
-                                tokens[1],
-                                "Не удалось выполнить операцию", JOptionPane.WARNING_MESSAGE);
+                    case OK:
                         break;
                     default:
                         System.out.println("client - THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM SERVER: " + input);
@@ -73,17 +72,18 @@ public class Client implements ConnectionListener, FileManager {
 
             // или обрабатываем входящие файлы
             } else if (input instanceof File) {
-                System.out.println("client - incoming message identified as File" + input);
                 saveFile((File) input);
 
             // или обрабатываем полученный список файлов
             } else if (input instanceof MyFileList){
-                System.out.println("client - incoming message identified as MyFileList: " + input);
                 listFiles(session, (MyFileList)input);
 
             } else {
-                System.out.println("client - THIS SHOULD NOT HAPPEN - UNKNOWN TYPE OF INCOMING MESSAGE: " + input);
-                //TODO
+                System.out.println("client - THIS SHOULD NOT HAPPEN - " +
+                        "UNKNOWN TYPE OF INCOMING MESSAGE IN MAIN SCREEN: " + input);
+                JSONObject message = new JSONObject();
+                message.put(Commands.REQUEST, Commands.LIST_CONTENTS);
+                SceneManager.getInstance().send(this, message);
             }
         });
     }
@@ -140,7 +140,10 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void downloadFile(Session session, String fileName) {
-        SceneManager.getInstance().send(this,"/download " + fileName);
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.DOWNLOAD);
+        message.put(Commands.FILE_NAME, fileName);
+        SceneManager.getInstance().send(this,message);
     }
 
     @Override
@@ -186,7 +189,11 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void renameFile(Session session, String oldName, String newName) {
-        SceneManager.getInstance().send(this, "/rename " + oldName + " " + newName);
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.RENAME);
+        message.put(Commands.FILE_NAME, oldName);
+        message.put(Commands.NEW_FILE_NAME, newName);
+        SceneManager.getInstance().send(this, message);
     }
 
     @FXML
@@ -217,7 +224,10 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void deleteFile(Session session, String name) {
-        SceneManager.getInstance().send(this,"/delete " + name);
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.DELETE);
+        message.put(Commands.FILE_NAME, name);
+        SceneManager.getInstance().send(this, message);
     }
 
 
@@ -239,7 +249,10 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void createDirectory (Session session, String name) {
-        SceneManager.getInstance().send(this,"/newDir " + name);
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.CREATE_DIRECTORY);
+        message.put(Commands.DIRECTORY_NAME, name);
+        SceneManager.getInstance().send(this, message);
     }
 
     @FXML private void directoryUp() {
@@ -248,12 +261,17 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void directoryUp(Session session) {
-        SceneManager.getInstance().send(this, "/dirUp");
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.DIRECTORY_UP);
+        SceneManager.getInstance().send(this, message);
     }
 
     @Override
     public void directoryDown(Session session, String directoryName) {
-        SceneManager.getInstance().send(this, "/dirDown " + directoryName);
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.DIRECTORY_DOWN);
+        message.put(Commands.DIRECTORY_NAME, directoryName);
+        SceneManager.getInstance().send(this, message);
     }
 
     @Override
@@ -287,7 +305,7 @@ public class Client implements ConnectionListener, FileManager {
 
     private boolean fileNameIsValid (String fileName) {
         // TODO доделать проверку имени файла на корректность
-        return fileName !=  null  && !fileName.isEmpty() && !fileName.contains(" ");
+        return fileName !=  null  && !fileName.isEmpty();
     }
 
     private void selectFile () {
