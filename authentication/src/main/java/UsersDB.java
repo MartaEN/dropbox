@@ -76,7 +76,6 @@ public class UsersDB implements UsersDOA {
 
     private void createUsersTable () throws SQLException {
         connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS users (" +
-                "    id     INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "    user CHAR (20) NOT NULL UNIQUE," +
                 "    password CHAR (12) NOT NULL); " +
                 "    CREATE UNIQUE INDEX i_users ON users (user);");
