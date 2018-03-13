@@ -13,13 +13,23 @@ public class UsersDB implements UsersDOA {
     }
 
     @Override
-    public void startService () throws RuntimeException {
+    public String startService () throws RuntimeException {
 
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_URL);
             prepareStatements();
+            checkUsersTable();
+            return ("AUTHENTICATION SERVICE: CONNECTED TO " + DATABASE_URL);
         } catch (SQLException e) {
-            throw new RuntimeException(e.getMessage());
+            try {
+                connection = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_URL);
+                createUsersTable();
+                prepareStatements();
+                checkUsersTable();
+                return ("ATTENTION --- AUTHENTICATION SERVICE: NEW USER DATABASE CREATED [" + DATABASE_URL + "]");
+            } catch (SQLException e1) {
+                throw new RuntimeException(e.getMessage());
+            }
         }
     }
 
@@ -62,6 +72,20 @@ public class UsersDB implements UsersDOA {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private void createUsersTable () throws SQLException {
+        connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS users (" +
+                "    id     INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "    user CHAR (20) NOT NULL UNIQUE," +
+                "    password CHAR (12) NOT NULL); " +
+                "    CREATE UNIQUE INDEX i_users ON users (user);");
+    }
+
+    private void checkUsersTable () throws SQLException {
+        authQuery.setString(1, "test");
+        authQuery.setString(2, "test");
+        authQuery.executeQuery().next();
     }
 
     @Override

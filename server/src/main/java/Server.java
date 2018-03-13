@@ -23,10 +23,21 @@ public class Server {
     Server() {
 
         try {
-            FileProcessor.createDirectoryIfNotExists(ROOT);
+            // check root directory
+            if(FileProcessor.fileExists(ROOT)) {
+                log("ROOT DIRECTORY " + ROOT);
+            } else {
+                FileProcessor.createDirectory(ROOT);
+                log("ATTENTION! --- NEW ROOT DIRECTORY CREATED " + ROOT);
+            }
+            // start authentication service
             authService = new AuthService(ROOT.resolve(USERS_DB_NAME).toString());
+            log(authService.start());
+            // open thread pool
             threadPool = Executors.newCachedThreadPool();
+            // open server socket
             serverSocket = new ServerSocket(PORT);
+            // ready
             log("SERVER STARTED");
 
             while (true) {
@@ -36,10 +47,11 @@ public class Server {
 
         } catch (FileProcessorException e) {
             log("ERROR INITIALIZING ROOT DIRECTORY: " + e.getMessage());
-        } catch (IOException e) {
-            log("ERROR CONNECTING TO SOCKET: " + e.getMessage());
         } catch (AuthServiceException e) {
             log(e.getMessage());
+        } catch (IOException e) {
+            log("ERROR CONNECTING TO SOCKET: " + e.getMessage());
+
         } finally {
             if(authService != null) authService.stop();
             if(threadPool != null) threadPool.shutdown();
