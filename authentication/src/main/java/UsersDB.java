@@ -26,7 +26,7 @@ public class UsersDB implements UsersDOA {
                 createUsersTable();
                 prepareStatements();
                 checkUsersTable();
-                return ("ATTENTION --- AUTHENTICATION SERVICE: NEW USER DATABASE CREATED [" + DATABASE_URL + "]");
+                return ("ATTENTION! --- AUTHENTICATION SERVICE: NEW USER DATABASE CREATED [" + DATABASE_URL + "]");
             } catch (SQLException e1) {
                 throw new RuntimeException(e.getMessage());
             }

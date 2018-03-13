@@ -13,30 +13,14 @@ public class Registration implements ConnectionListener, LoginChecker {
     @FXML private TextField password;
     @FXML private TextField password1;
     @FXML private Button btnRegister;
+
     @FXML private void initialize() {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.TEST);
         SceneManager.getInstance().send(this, message);
     }
     @FXML private void switchToAuthentication () { SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.AUTHENTICATION); }
-    @FXML private void checkNewUserName() { checkNewUserName(null, username.getText());}
-    @FXML private void signUp() { signUp(null, null, null);  }
 
-    @FXML private void checkPassword () {
-        String pwd = password.getText();
-        if (!isPasswordOK(pwd)) {
-            JOptionPane.showConfirmDialog(null,
-                    "Пароль должен содержать от 4 до 8 символов: букв латинского алфавита и цифр",
-                    "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
-            password.clear();
-        }
-    }
-
-    @FXML private void checkRepeatedPassword(KeyEvent keyEvent) {
-        if (password1.getText().equals(password.getText())) {
-            btnRegister.setDisable(false);
-        }
-    }
 
 
     @Override
@@ -58,6 +42,7 @@ public class Registration implements ConnectionListener, LoginChecker {
                                 "Регистрация пользователя", JOptionPane.INFORMATION_MESSAGE);
                         SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WORK);
                         break;
+                    case NOT_ADMITTED:
                     case FAIL:
                         JOptionPane.showMessageDialog(null,
                                 json.getOrDefault(Commands.FAIL_DETAILS,
@@ -89,34 +74,10 @@ public class Registration implements ConnectionListener, LoginChecker {
     }
 
 
-
-    @Override
-    public void signIn(Session session, String user, String password) { }
-
-    @Override
-    public void signUp(Session session, String user, String pwd) {
-        if (isUsernameOK(username.getText())
-                && isPasswordOK(password.getText())
-                && (password1.getText().equals(password.getText()))) {
-
-            JSONObject message = new JSONObject();
-            message.put(Commands.REQUEST, Commands.SIGN_UP);
-            message.put(Commands.USERNAME, user);
-            message.put(Commands.PASSWORD, pwd);
-            SceneManager.getInstance().send(this, message);
-
-        } else System.out.println("------SMTH WENT WRONG IN REGISTRATION SCREEN");
-    }
-
-    @Override
-    public void checkNewUserName(Session session, String newName) {
-        if (isUsernameOK(newName)) {
-
-            JSONObject message = new JSONObject();
-            message.put(Commands.REQUEST, Commands.CHECK_NEW_USER_NAME);
-            message.put(Commands.USERNAME, newName);
-            SceneManager.getInstance().send(this, message);
-
+    @FXML
+    private void checkNewUserName() {
+        if (isUsernameOK(username.getText())) {
+            checkNewUserName(null, username.getText());
         } else {
             JOptionPane.showConfirmDialog(null,
                     "Пожалуйста, придумайте имя пользователя, состоящее только из строчных букв латинского алфавита и цифр",
@@ -124,6 +85,63 @@ public class Registration implements ConnectionListener, LoginChecker {
             username.clear();
         }
     }
+
+
+    @Override
+    public void checkNewUserName(Session session, String name) {
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.CHECK_NEW_USER_NAME);
+        message.put(Commands.USERNAME, name);
+        SceneManager.getInstance().send(this, message);
+    }
+
+    @FXML
+    private void signUp() {
+        if (!isUsernameOK(username.getText())) {
+            JOptionPane.showConfirmDialog(null,
+                    "Пожалуйста, придумайте имя пользователя, состоящее только из строчных букв латинского алфавита и цифр",
+                    "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
+            username.clear();
+        } else if (!isPasswordOK(password.getText())) {
+            JOptionPane.showConfirmDialog(null,
+                    "Пароль должен содержать от 4 до 8 символов: букв латинского алфавита и цифр",
+                    "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
+            password.clear();
+            password1.clear();
+        } else if (!(password1.getText().equals(password.getText()))) {
+            JOptionPane.showConfirmDialog(null,
+                    "Пароли не совпадают - перепроверьте, пожалуйста, пароль",
+                    "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
+            password1.clear();
+        } else {
+            signUp(null, username.getText(), password.getText());
+        }
+    }
+
+    @Override
+    public void signUp(Session session, String user, String password) {
+        JSONObject message = new JSONObject();
+        message.put(Commands.REQUEST, Commands.SIGN_UP);
+        message.put(Commands.USERNAME, user);
+        message.put(Commands.PASSWORD, password);
+        SceneManager.getInstance().send(this, message);
+    }
+
+    @FXML private void checkPassword () {
+        String pwd = password.getText();
+        if (!isPasswordOK(pwd)) {
+            JOptionPane.showConfirmDialog(null,
+                    "Пароль должен содержать от 4 до 8 символов: букв латинского алфавита и цифр",
+                    "Регистрация пользователя", JOptionPane.WARNING_MESSAGE);
+            password.clear();
+        }
+    }
+
+
+    @Override
+    public void signIn(Session session, String user, String password) { }
+
+
 
     private boolean isUsernameOK (String username) {
         return username.chars().allMatch(ch -> (ch >= 'a' && ch <= 'z')
