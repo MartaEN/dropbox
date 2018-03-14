@@ -8,19 +8,19 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Authentication">
+<AnchorPane prefHeight="400.0" prefWidth="450.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Authentication">
    <children>
-      <Label layoutX="32.0" layoutY="41.0" text="Вход для зарегистрированных пользователей">
+      <Label layoutX="32.0" layoutY="41.0" text="%title.authentication">
          <font>
             <Font name="System Bold" size="14.0" />
          </font>
       </Label>
       <Label layoutX="32.0" layoutY="60.0" text="test run:  try login1 + pass, login2 + pass" textFill="RED" />
-      <TextField fx:id="loginField" layoutX="169.0" layoutY="91.0" prefHeight="25.0" prefWidth="181.0" />
-      <PasswordField fx:id="passwordField" layoutX="169.0" layoutY="136.0" onAction="#signIn" prefHeight="25.0" prefWidth="181.0" />
-      <Label layoutX="32.0" layoutY="95.0" prefHeight="17.0" prefWidth="149.0" text="Имя пользователя:" />
-      <Label layoutX="32.0" layoutY="140.0" prefHeight="17.0" prefWidth="123.0" text="Пароль:" />
-      <Button layoutX="298.0" layoutY="188.0" mnemonicParsing="false" onAction="#signIn" text="Войти" />
-      <Hyperlink layoutX="195.0" layoutY="225.0" onAction="#switchToRegistration" text="Ещё не зарегистрированы?" />
+      <TextField fx:id="loginField" layoutX="169.0" layoutY="91.0" prefHeight="25.0" prefWidth="200.0" />
+      <PasswordField fx:id="passwordField" layoutX="169.0" layoutY="136.0" onAction="#signIn" prefHeight="25.0" prefWidth="200.0" />
+      <Label layoutX="32.0" layoutY="95.0" prefHeight="17.0" prefWidth="149.0" text="%user.name" />
+      <Label layoutX="32.0" layoutY="140.0" prefHeight="17.0" prefWidth="123.0" text="%user.password" />
+      <Button layoutX="236.0" layoutY="188.0" mnemonicParsing="false" onAction="#signIn" prefHeight="25.0" prefWidth="132.0" text="%action.sign-in" />
+      <Hyperlink layoutX="118.0" layoutY="225.0" onAction="#switchToRegistration" prefHeight="23.0" prefWidth="249.0" text="%prompt.sign-up" />
    </children>
 </AnchorPane>
