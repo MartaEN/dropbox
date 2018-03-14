@@ -1,14 +1,11 @@
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import org.json.simple.JSONObject;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -60,9 +57,9 @@ public class Client implements ConnectionListener, FileManager {
 
                 switch (cmd) {
                     case FAIL:
-                        JOptionPane.showConfirmDialog(null,
-                                json.getOrDefault(Commands.FAIL_DETAILS, "Что-то пошло не так..."),
-                                "Не удалось выполнить операцию", JOptionPane.WARNING_MESSAGE);
+                        DialogManager.showWarning(
+                                SceneManager.translate("error.operation-fail"),
+                                (String) json.getOrDefault(Commands.FAIL_DETAILS, SceneManager.translate("error.smth-went-wrong")));
                         break;
                     case OK:
                         break;
@@ -97,20 +94,18 @@ public class Client implements ConnectionListener, FileManager {
     @Override
     public void onException(Session session, Exception e) {
         e.printStackTrace();
-        JOptionPane.showMessageDialog(null, "Потеряно соединение с сервером",
-                "Ошибка", JOptionPane.WARNING_MESSAGE);
+        DialogManager.showWarning(
+                SceneManager.translate("error.connection-failed"),
+                SceneManager.translate("error.smth-went-wrong"));
         SceneManager.getInstance().disconnect();
     }
 
     @FXML
     private void uploadFile() {
 
-        String title = "Загрузка файла в удаленное хранилище";
-        String message = "Введите путь к файлу: ";
-        String errorDir = "Папка загружена быть не может, укажите путь к файлу";
-        String errorNotFound = "Файл не найден";
+        String title = SceneManager.translate("title.upload");
 
-        String path = JOptionPane.showInputDialog(null, message, title, JOptionPane.QUESTION_MESSAGE);
+        String path = DialogManager.getInput(title, SceneManager.translate("prompt.path"));
 
         File file = new File (path);
 
@@ -119,10 +114,10 @@ public class Client implements ConnectionListener, FileManager {
                 uploadFile(null, file);
             } else {
                 //TODO что делать с папками
-                JOptionPane.showConfirmDialog(null, errorDir, title, JOptionPane.WARNING_MESSAGE);
+                DialogManager.showWarning(title, SceneManager.translate("message.cannot-upload-directory"));
             }
         } else {
-            JOptionPane.showConfirmDialog(null, errorNotFound, title, JOptionPane.WARNING_MESSAGE);
+            DialogManager.showWarning(title, SceneManager.translate("error.file-not-found"));
         }
     }
 
@@ -151,9 +146,9 @@ public class Client implements ConnectionListener, FileManager {
         try {
             FileProcessor.saveFile(ROOT, input);
         } catch (FileProcessorException e) {
-            JOptionPane.showConfirmDialog(null,
-                    "Ошибка сохранения файла",
-                    "Не удалось выполнить операцию", JOptionPane.WARNING_MESSAGE);
+            DialogManager.showWarning(
+                    SceneManager.translate("error.error"),
+                    SceneManager.translate("error.operation-fail"));
         }
     }
 
@@ -169,21 +164,21 @@ public class Client implements ConnectionListener, FileManager {
         String errorMessage;
 
         if (selectedFile.getType() == MyFile.FileType.FILE) {
-            title = "Переименование файла " + selectedFile.getName();
-            message = "Bведите новое имя файла: ";
-            errorMessage = "Некорректное имя файла";
+            title = SceneManager.translate("title.rename-file") + " " + selectedFile.getName();
+            message = SceneManager.translate("prompt.new-file-name");
+            errorMessage = SceneManager.translate("error.file-name");
         } else {
-            title = "Переименование папки " + selectedFile.getName();
-            message = "Bведите новое имя папки: ";
-            errorMessage = "Некорректное имя папки";
+            title = SceneManager.translate("title.rename-directory") + " " + selectedFile.getName();
+            message = SceneManager.translate("prompt.new-directory-name");
+            errorMessage = SceneManager.translate("error.directory-name");
         }
 
-        String newName = JOptionPane.showInputDialog(null, message, title, JOptionPane.QUESTION_MESSAGE);
+        String newName = DialogManager.getInput(title, message);
 
         if (fileNameIsValid(newName)) {
             renameFile(null, selectedFile.getName(), newName);
         } else {
-            JOptionPane.showConfirmDialog(null, errorMessage, title, JOptionPane.WARNING_MESSAGE);
+            DialogManager.showWarning(title, errorMessage);
         }
     }
 
@@ -203,23 +198,16 @@ public class Client implements ConnectionListener, FileManager {
 
         if(selectedFile == null) return;
 
-        String message;
         String title;
-        String [] buttons = { "Да", "Нет"};
+        String message = SceneManager.translate("action.delete") + " " + selectedFile.getName()+"?";
 
         if(selectedFile.getType() == MyFile.FileType.FILE) {
-            message = "Удалить " + selectedFile.getName()+"?";
-            title = "Удаление файла";
+            title = SceneManager.translate("title.delete-file");
         } else {
-            message = "Удалить " + selectedFile.getName()+"?";
-            title = "Удаление папки";
+            title = SceneManager.translate("title.delete-directory");
         }
 
-        int userChoice = JOptionPane.showOptionDialog(null, message, title,
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
-
-        if (userChoice == 0) deleteFile(null, selectedFile.getName());
-
+        if (DialogManager.reconfirmed(title, message)) deleteFile(null, selectedFile.getName());
     }
 
     @Override
@@ -234,16 +222,16 @@ public class Client implements ConnectionListener, FileManager {
     @FXML
     private void createDirectory () {
 
-        String title = "Создание новой папки";
-        String message = "Bведите имя папки: ";
-        String errorMessage = "Ошибка: некорректное имя";
+        String title = SceneManager.translate("action.new-folder");
+        String message = SceneManager.translate("prompt.new-folder");
+        String errorMessage = SceneManager.translate("error.directory-name");
 
-        String newDirectory = JOptionPane.showInputDialog(null, message, title, JOptionPane.QUESTION_MESSAGE);
+        String newDirectory = DialogManager.getInput(title, message);
 
         if (fileNameIsValid(newDirectory)) {
             createDirectory(null, newDirectory);
         } else {
-            JOptionPane.showConfirmDialog(null, errorMessage, title, JOptionPane.WARNING_MESSAGE);
+            DialogManager.showWarning(title, errorMessage);
         }
     }
 
@@ -294,9 +282,8 @@ public class Client implements ConnectionListener, FileManager {
             if (selectedFile.getType() == MyFile.FileType.DIR) {
                 directoryDown(null, selectedFile.getName());
             } else {
-                if (JOptionPane.showConfirmDialog(null,
-                        "Загрузить выбранный файл на локальный диск?", "Загрузка файла",
-                        JOptionPane.OK_CANCEL_OPTION) == 0)   {
+                if (DialogManager.reconfirmed(SceneManager.translate("title.download"),
+                        SceneManager.translate("prompt.download"))) {
                     downloadFile(null, selectedFile.getName());
                 }
             }
@@ -318,7 +305,9 @@ public class Client implements ConnectionListener, FileManager {
         } else {
             btnDelete.setDisable(false);
             btnRename.setDisable(false);
-            btnDownload.setDisable(false);
+            if (selectedFile.getType() == MyFile.FileType.DIR )
+                 btnDownload.setDisable(true);
+            else btnDownload.setDisable(false);
         }
     }
 }

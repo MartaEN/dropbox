@@ -28,10 +28,12 @@ public class SceneManager {
 
     public static SceneManager getInstance() { return thisInstance; }
 
+    public static String translate (String message) { return thisInstance.resourceBundle.getString(message); }
+
     public void init (Stage primaryStage, Locale lang) {
         this.primaryStage = primaryStage;
         this.resourceBundle = ResourceBundle.getBundle("locales.Locale", lang);
-        primaryStage.setTitle(resourceBundle.getString("app.title"));
+        primaryStage.setTitle(resourceBundle.getString("title.app"));
     }
 
     public void switchSceneTo (Scenes scene) {

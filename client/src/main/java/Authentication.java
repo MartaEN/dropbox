@@ -4,8 +4,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import org.json.simple.JSONObject;
 
-import javax.swing.*;
-
 public class Authentication implements ConnectionListener, LoginChecker {
 
     @FXML private TextField loginField;
@@ -36,15 +34,15 @@ public class Authentication implements ConnectionListener, LoginChecker {
                         SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WORK);
                         break;
                     case NOT_ADMITTED:
-                        //TODO
-                        JOptionPane.showMessageDialog(null, "Неверные логин или пароль",
-                                "Ошибка авторизации", JOptionPane.WARNING_MESSAGE);
+                        DialogManager.showWarning(
+                                SceneManager.translate("message.not-admitted"),
+                                SceneManager.translate("message.wrong-username-or-password"));
                         passwordField.clear();
                         break;
                     case FAIL:
-                        JOptionPane.showConfirmDialog(null,
-                                json.getOrDefault(Commands.FAIL_DETAILS, "Что-то пошло не так...").toString(),
-                                "Ошибка подключения", JOptionPane.WARNING_MESSAGE);
+                        DialogManager.showWarning(
+                                SceneManager.translate("error.connection-failed"),
+                                SceneManager.translate("error.smth-went-wrong"));
                         break;
                     case OK:
                         break;
@@ -62,8 +60,9 @@ public class Authentication implements ConnectionListener, LoginChecker {
 
     @Override
     public void onException(Session session, Exception e) {
-        JOptionPane.showMessageDialog(null, "Нет соединения с сервером",
-                "Что-то пошло не так...", JOptionPane.WARNING_MESSAGE);
+        DialogManager.showWarning(
+                SceneManager.translate("error.connection-failed"),
+                SceneManager.translate("error.smth-went-wrong"));
         e.printStackTrace();
     }
 
