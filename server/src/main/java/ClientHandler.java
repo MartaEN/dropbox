@@ -229,7 +229,7 @@ public class ClientHandler implements ConnectionListener {
 
         for (File f: new File(activeDirectory.toString()).listFiles()) {
             fileList.add(new MyFile(f.isFile()? MyFile.FileType.FILE: MyFile.FileType.DIR,
-                    f.getName(), (int)f.length()/1000));
+                    f.getName(), (int)f.length()/1024));
         }
         session.send(new MyFileList(fileList));
     }
