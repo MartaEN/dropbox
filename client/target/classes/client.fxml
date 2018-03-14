@@ -3,15 +3,13 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TableColumn?>
 
 <VBox alignment="center" prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client">
     <children>
         <ToolBar fx:id="menuPanel" prefHeight="40.0" prefWidth="400.0">
             <items>
                 <Button mnemonicParsing="false" onAction="#directoryUp" text="&lt;" />
-                <Button mnemonicParsing="false" onAction="#createDirectory" prefWidth="71.0" text="New Folder" />
+                <Button mnemonicParsing="false" onAction="#createDirectory" text="New Folder" />
                 <Button fx:id="btnDownload" disable="true" mnemonicParsing="false" onAction="#downloadFile" prefWidth="71.0" text="Download" />
                 <Button fx:id="btnRename" disable="true" mnemonicParsing="false" onAction="#renameFile" prefWidth="65.0" text="Rename" />
                 <Button fx:id="btnDelete" disable="true" mnemonicParsing="false" onAction="#deleteFile" prefWidth="65.0" text="Delete" />
@@ -21,8 +19,8 @@
         <TableView fx:id="table" accessibleRole="LIST_VIEW" onMouseClicked="#clickOnFile" prefHeight="360.0" prefWidth="400.0">
             <columns>
                 <TableColumn fx:id="colType" editable="false" prefWidth="60.0" text="&gt;" />
-                <TableColumn fx:id="colName" editable="false" prefWidth="250.0" text="name" />
-                <TableColumn fx:id="colSize" editable="false" prefWidth="90.0" text="size" />
+                <TableColumn fx:id="colName" editable="false" prefWidth="250.0" text="Имя" />
+                <TableColumn fx:id="colSize" editable="false" prefWidth="90.0" text="Размер, КБ" />
             </columns>
         </TableView>
     </children>

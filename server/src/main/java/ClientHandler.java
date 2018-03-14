@@ -66,9 +66,7 @@ public class ClientHandler implements ConnectionListener {
                     signUp((String)json.get(Commands.USERNAME), (String)json.get(Commands.PASSWORD));
                     break;
                 case TEST:
-                    JSONObject message = new JSONObject();
-                    message.put(Commands.REPLY, Commands.OK);
-                    session.send(message);
+                    sendOK();
                     break;
                 default:
                     server.log(session, "Server - THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM USER");
@@ -108,7 +106,7 @@ public class ClientHandler implements ConnectionListener {
         }
         send(message);
         //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном авторизации, а не главным
-        send(message);
+        sendOK();
     }
 
     private void signUp(String user, String password) {
@@ -128,7 +126,7 @@ public class ClientHandler implements ConnectionListener {
         }
         send(message);
         //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном регистрации, а не главным
-        send(message);
+        sendOK();
     }
 
     private void checkNewUserName(String name) {
@@ -231,11 +229,16 @@ public class ClientHandler implements ConnectionListener {
 
         for (File f: new File(activeDirectory.toString()).listFiles()) {
             fileList.add(new MyFile(f.isFile()? MyFile.FileType.FILE: MyFile.FileType.DIR,
-                    f.getName(), (int)f.length()/1000));
+                    f.getName(), (int)f.length()/1024));
         }
         session.send(new MyFileList(fileList));
     }
 
+    private void sendOK () {
+        JSONObject message = new JSONObject();
+        message.put(Commands.REPLY, Commands.OK);
+        session.send(message);
+    }
 
     private <T> void send (T message) {
         session.send(message);

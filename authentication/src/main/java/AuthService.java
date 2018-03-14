@@ -4,8 +4,11 @@ public class AuthService {
 
     AuthService (String dbURL) {
         userList = new UsersDB(dbURL);
+    }
+
+    String start () {
         try {
-            userList.startService();
+            return userList.startService();
         } catch (Exception e) {
             throw new AuthServiceException("ERROR INITIALIZING USER AUTHENTICATION SERVICE:\n\t"+e.getMessage());
         }

@@ -19,12 +19,11 @@ public class Session implements Runnable {
     }
 
     public Session (ConnectionListener connectionListener, Socket socket, SessionType type) {
-        System.out.println("inside session constructor ");
         this.socket = socket;
         this.connectionListener = connectionListener;
         try {
             switch (type) {
-                // разный порядок для сервера и клиента во избежание дедлока
+                // different for server and client int order to avoid deadlock
                 case SERVER:
                     in = new ObjectInputStream(socket.getInputStream());
                     out = new ObjectOutputStream(socket.getOutputStream());
@@ -41,8 +40,6 @@ public class Session implements Runnable {
 
     @Override
     public void run () {
-
-        System.out.println("session " + this + " inside run method");
 
         try {
             connectionListener.onConnect(this);

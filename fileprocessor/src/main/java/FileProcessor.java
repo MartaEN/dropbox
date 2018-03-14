@@ -44,14 +44,6 @@ public class FileProcessor {
         }
     }
 
-    public static void createDirectoryIfNotExists(Path path) throws FileProcessorException {
-        try {
-            if (!Files.exists(path)) Files.createDirectory(path);
-        } catch (IOException e) {
-            throw new FileProcessorException(e);
-        }
-    }
-
     public static boolean fileExists (Path path) {
         return Files.exists(path, LinkOption.NOFOLLOW_LINKS);
     }
