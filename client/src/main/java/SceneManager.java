@@ -5,6 +5,8 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class SceneManager {
 
@@ -12,10 +14,11 @@ public class SceneManager {
     private Stage primaryStage;
     private Scene welcome, authentication, registration, client, test;
 
-    final String IP_ADDRESS = "localhost";
-    final int PORT = 2018;
+    private final String IP_ADDRESS = "localhost";
+    private final int PORT = 2018;
     private Session session;
     private Socket socket;
+    private ResourceBundle resourceBundle;
 
     public enum Scenes {
         WELCOME, AUTHENTICATION, REGISTRATION, WORK;
@@ -25,29 +28,31 @@ public class SceneManager {
 
     public static SceneManager getInstance() { return thisInstance; }
 
-    public void init (Stage primaryStage) {
+    public void init (Stage primaryStage, Locale lang) {
         this.primaryStage = primaryStage;
-        primaryStage.setTitle("Yet Another Dropbox");
+        this.resourceBundle = ResourceBundle.getBundle("locales.Locale", lang);
+        primaryStage.setTitle(resourceBundle.getString("app.title"));
     }
 
     public void switchSceneTo (Scenes scene) {
         Platform.runLater(()-> {
             try {
+
                 switch (scene) {
                     case WELCOME:
-                        welcome = new Scene(new FXMLLoader(getClass().getResource("entrance.fxml")).load(), 400, 400);
+                        welcome = new Scene(new FXMLLoader(getClass().getResource("entrance.fxml"), resourceBundle).load(), 450, 400);
                         primaryStage.setScene(welcome);
                         break;
                     case AUTHENTICATION:
-                        authentication = new Scene(new FXMLLoader(getClass().getResource("authentication.fxml")).load(), 400, 400);
+                        authentication = new Scene(new FXMLLoader(getClass().getResource("authentication.fxml"), resourceBundle).load(), 450, 400);
                         primaryStage.setScene(authentication);
                         break;
                     case REGISTRATION:
-                        registration = new Scene(new FXMLLoader(getClass().getResource("registration.fxml")).load(), 400, 400);
+                        registration = new Scene(new FXMLLoader(getClass().getResource("registration.fxml"), resourceBundle).load(), 450, 400);
                         primaryStage.setScene(registration);
                         break;
                     case WORK:
-                        client = new Scene(new FXMLLoader(getClass().getResource("client.fxml")).load(), 400, 400);
+                        client = new Scene(new FXMLLoader(getClass().getResource("client.fxml"), resourceBundle).load(), 450, 400);
                         primaryStage.setScene(client);
                         break;
                 }
