@@ -3,7 +3,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import org.json.simple.JSONObject;
 
-public class Registration implements ConnectionListener, LoginChecker {
+public class Registration implements ConnectionListener, SignUpChecker {
 
     @FXML private TextField username;
     @FXML private TextField password;
@@ -73,7 +73,7 @@ public class Registration implements ConnectionListener, LoginChecker {
     @FXML
     private void checkNewUserName() {
         if (isUsernameOK(username.getText())) {
-            checkNewUserName(null, username.getText());
+            checkNewUserName(username.getText());
         } else {
             DialogManager.showWarning(
                     SceneManager.translate("message.sign-up"),
@@ -84,7 +84,7 @@ public class Registration implements ConnectionListener, LoginChecker {
 
 
     @Override
-    public void checkNewUserName(Session session, String name) {
+    public void checkNewUserName(String name) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.CHECK_NEW_USER_NAME);
         message.put(Commands.USERNAME, name);
@@ -110,12 +110,12 @@ public class Registration implements ConnectionListener, LoginChecker {
                     SceneManager.translate("message.sign-up-password-repeat"));
             password1.clear();
         } else {
-            signUp(null, username.getText(), password.getText());
+            signUp(username.getText(), password.getText());
         }
     }
 
     @Override
-    public void signUp(Session session, String user, String password) {
+    public void signUp(String user, String password) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.SIGN_UP);
         message.put(Commands.USERNAME, user);
@@ -132,12 +132,6 @@ public class Registration implements ConnectionListener, LoginChecker {
             password.clear();
         }
     }
-
-
-    @Override
-    public void signIn(Session session, String user, String password) { }
-
-
 
     private boolean isUsernameOK (String username) {
         return username.chars().allMatch(ch -> (ch >= 'a' && ch <= 'z')

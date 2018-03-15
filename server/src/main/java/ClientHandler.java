@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-public class ClientHandler implements ConnectionListener {
+public class ClientHandler implements ConnectionListener, FileManager, SignInChecker, SignUpChecker {
 
     private final Server server;
     private final Session session;
@@ -89,7 +89,8 @@ public class ClientHandler implements ConnectionListener {
         server.log(session, "DISCONNECTED");
     }
 
-    private void signIn(String user, String password) {
+    @Override
+    public void signIn(String user, String password) {
         JSONObject message = new JSONObject();
         if( server.getAuthService().loginAccepted(user,password)) {
             activeDirectory = activeDirectory.resolve(user);
@@ -109,7 +110,8 @@ public class ClientHandler implements ConnectionListener {
         sendOK();
     }
 
-    private void signUp(String user, String password) {
+    @Override
+    public void signUp(String user, String password) {
         JSONObject message = new JSONObject();
         if (server.getAuthService().registerNewUser(user, password)) {
             activeDirectory = SERVER_ROOT.resolve(user);
@@ -129,7 +131,8 @@ public class ClientHandler implements ConnectionListener {
         sendOK();
     }
 
-    private void checkNewUserName(String name) {
+    @Override
+    public void checkNewUserName(String name) {
         JSONObject message = new JSONObject();
         if (server.getAuthService().newUserNameAccepted(name)) {
             message.put(Commands.REPLY, Commands.USERNAME_OK);
@@ -140,7 +143,8 @@ public class ClientHandler implements ConnectionListener {
         send(message);
     }
 
-    private void uploadFile(File input) {
+    @Override
+    public void uploadFile(File input) {
         try {
             FileProcessor.saveFile(activeDirectory, input);
         } catch (FileProcessorException e) {
@@ -152,7 +156,13 @@ public class ClientHandler implements ConnectionListener {
         listFiles();
     }
 
-    private void downloadFile(String fileName) {
+    @Override
+    public void saveFile (File file) {
+        uploadFile(file);
+    }
+
+    @Override
+    public void downloadFile(String fileName) {
         File file = new File (activeDirectory.resolve(fileName).toString());
         if (file.exists()) {
             if (file.isFile()) session.send(file);
@@ -164,7 +174,8 @@ public class ClientHandler implements ConnectionListener {
         }
     }
 
-    private void rename (String oldName, String newName) {
+    @Override
+    public void rename (String oldName, String newName) {
         try {
             FileProcessor.rename(activeDirectory.resolve(oldName), newName);
         } catch (FileProcessorException e){
@@ -176,7 +187,8 @@ public class ClientHandler implements ConnectionListener {
         listFiles();
     }
 
-    private void delete(String name) {
+    @Override
+    public void delete(String name) {
         try {
             FileProcessor.delete(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
@@ -188,7 +200,8 @@ public class ClientHandler implements ConnectionListener {
         listFiles();
     }
 
-    private void createDirectory (String name) {
+    @Override
+    public void createDirectory (String name) {
         try {
             FileProcessor.createDirectory(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
@@ -200,15 +213,16 @@ public class ClientHandler implements ConnectionListener {
         listFiles();
     }
 
-    private void directoryUp() {
+    @Override
+    public void directoryUp() {
         if (!activeDirectory.getParent().equals(SERVER_ROOT)) {
             activeDirectory = activeDirectory.getParent();
         }
         listFiles();
     }
 
-
-    private void directoryDown(String directoryName) {
+    @Override
+    public void directoryDown(String directoryName) {
 
         Path target = activeDirectory.resolve(directoryName);
 
@@ -223,7 +237,7 @@ public class ClientHandler implements ConnectionListener {
         listFiles();
     }
 
-    private void listFiles() {
+    private void listFiles () {
 
         ArrayList<MyFile> fileList = new ArrayList<>();
 
@@ -233,6 +247,9 @@ public class ClientHandler implements ConnectionListener {
         }
         session.send(new MyFileList(fileList));
     }
+
+    @Override
+    public void listFiles(MyFileList list) { listFiles(); }
 
     private void sendOK () {
         JSONObject message = new JSONObject();

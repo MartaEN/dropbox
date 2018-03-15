@@ -4,7 +4,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import org.json.simple.JSONObject;
 
-public class Authentication implements ConnectionListener, LoginChecker {
+public class Authentication implements ConnectionListener, SignInChecker {
 
     @FXML private TextField loginField;
     @FXML private PasswordField passwordField;
@@ -14,7 +14,7 @@ public class Authentication implements ConnectionListener, LoginChecker {
         SceneManager.getInstance().send(this, message);
     }
 
-    @FXML private void signIn() { signIn(null, loginField.getText(), passwordField.getText()); }
+    @FXML private void signIn() { signIn(loginField.getText(), passwordField.getText()); }
     @FXML private void switchToRegistration () { SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.REGISTRATION); }
 
     @Override
@@ -67,18 +67,12 @@ public class Authentication implements ConnectionListener, LoginChecker {
     }
 
     @Override
-    public void signIn(Session session, String user, String password) {
+    public void signIn(String user, String password) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.SIGN_IN);
         message.put(Commands.USERNAME, user);
         message.put(Commands.PASSWORD, password);
         SceneManager.getInstance().send(this, message);
     }
-
-    @Override
-    public void signUp(Session session, String user, String password) { }
-
-    @Override
-    public void checkNewUserName(Session session, String name) { }
 
 }

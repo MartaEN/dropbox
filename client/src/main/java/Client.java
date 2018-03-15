@@ -73,7 +73,7 @@ public class Client implements ConnectionListener, FileManager {
 
             // или обрабатываем полученный список файлов
             } else if (input instanceof MyFileList){
-                listFiles(session, (MyFileList)input);
+                listFiles((MyFileList)input);
 
             } else {
                 System.out.println("client - THIS SHOULD NOT HAPPEN - " +
@@ -111,7 +111,7 @@ public class Client implements ConnectionListener, FileManager {
 
         if (file.exists()) {
             if(file.isFile()) {
-                uploadFile(null, file);
+                uploadFile(file);
             } else {
                 //TODO что делать с папками
                 DialogManager.showWarning(title, SceneManager.translate("message.cannot-upload-directory"));
@@ -122,7 +122,7 @@ public class Client implements ConnectionListener, FileManager {
     }
 
     @Override
-    public void uploadFile (Session session, File file) {
+    public void uploadFile (File file) {
         SceneManager.getInstance().send(this, file);
     }
 
@@ -130,11 +130,11 @@ public class Client implements ConnectionListener, FileManager {
     @FXML private void downloadFile () {
         MyFile selectedFile = table.getSelectionModel().getSelectedItem();
         if (selectedFile == null) return;
-        downloadFile(null, selectedFile.getName());
+        downloadFile(selectedFile.getName());
     }
 
     @Override
-    public void downloadFile(Session session, String fileName) {
+    public void downloadFile(String fileName) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.DOWNLOAD);
         message.put(Commands.FILE_NAME, fileName);
@@ -153,7 +153,7 @@ public class Client implements ConnectionListener, FileManager {
     }
 
     @FXML
-    private void renameFile () {
+    private void rename() {
 
         MyFile selectedFile = table.getSelectionModel().getSelectedItem();
 
@@ -176,14 +176,14 @@ public class Client implements ConnectionListener, FileManager {
         String newName = DialogManager.getInput(title, message);
 
         if (fileNameIsValid(newName)) {
-            renameFile(null, selectedFile.getName(), newName);
+            rename(selectedFile.getName(), newName);
         } else {
             DialogManager.showWarning(title, errorMessage);
         }
     }
 
     @Override
-    public void renameFile(Session session, String oldName, String newName) {
+    public void rename(String oldName, String newName) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.RENAME);
         message.put(Commands.FILE_NAME, oldName);
@@ -192,7 +192,7 @@ public class Client implements ConnectionListener, FileManager {
     }
 
     @FXML
-    private void deleteFile () {
+    private void delete () {
 
         MyFile selectedFile = table.getSelectionModel().getSelectedItem();
 
@@ -207,11 +207,11 @@ public class Client implements ConnectionListener, FileManager {
             title = SceneManager.translate("title.delete-directory");
         }
 
-        if (DialogManager.reconfirmed(title, message)) deleteFile(null, selectedFile.getName());
+        if (DialogManager.reconfirmed(title, message)) delete(selectedFile.getName());
     }
 
     @Override
-    public void deleteFile(Session session, String name) {
+    public void delete(String name) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.DELETE);
         message.put(Commands.FILE_NAME, name);
@@ -229,33 +229,30 @@ public class Client implements ConnectionListener, FileManager {
         String newDirectory = DialogManager.getInput(title, message);
 
         if (fileNameIsValid(newDirectory)) {
-            createDirectory(null, newDirectory);
+            createDirectory(newDirectory);
         } else {
             DialogManager.showWarning(title, errorMessage);
         }
     }
 
     @Override
-    public void createDirectory (Session session, String name) {
+    public void createDirectory (String name) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.CREATE_DIRECTORY);
         message.put(Commands.DIRECTORY_NAME, name);
         SceneManager.getInstance().send(this, message);
     }
 
-    @FXML private void directoryUp() {
-        directoryUp(null);
-    }
-
+    @FXML
     @Override
-    public void directoryUp(Session session) {
+    public void directoryUp() {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.DIRECTORY_UP);
         SceneManager.getInstance().send(this, message);
     }
 
     @Override
-    public void directoryDown(Session session, String directoryName) {
+    public void directoryDown(String directoryName) {
         JSONObject message = new JSONObject();
         message.put(Commands.REQUEST, Commands.DIRECTORY_DOWN);
         message.put(Commands.DIRECTORY_NAME, directoryName);
@@ -263,7 +260,7 @@ public class Client implements ConnectionListener, FileManager {
     }
 
     @Override
-    public void listFiles (Session session, MyFileList input) {
+    public void listFiles (MyFileList input) {
         table.setItems(FXCollections.observableArrayList(input.getFileList()));
     }
 
@@ -280,11 +277,11 @@ public class Client implements ConnectionListener, FileManager {
             if (selectedFile == null) return;
 
             if (selectedFile.getType() == MyFile.FileType.DIR) {
-                directoryDown(null, selectedFile.getName());
+                directoryDown(selectedFile.getName());
             } else {
                 if (DialogManager.reconfirmed(SceneManager.translate("title.download"),
                         SceneManager.translate("prompt.download"))) {
-                    downloadFile(null, selectedFile.getName());
+                    downloadFile(selectedFile.getName());
                 }
             }
         }
