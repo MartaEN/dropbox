@@ -29,8 +29,6 @@ public class FileProcessor {
     public static void delete (Path path) throws FileProcessorException {
         try {
             Files.delete(path);
-        } catch (DirectoryNotEmptyException e) {
-            throw new FileProcessorException("DirectoryNotEmpty");
         } catch (IOException e) {
             throw new FileProcessorException(e);
         }
