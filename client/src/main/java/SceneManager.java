@@ -13,6 +13,7 @@ public class SceneManager {
     private static final SceneManager thisInstance = new SceneManager();
     private Stage primaryStage;
     private Scene welcome, authentication, registration, client, test;
+    private boolean closed;
 
     private final String IP_ADDRESS = "localhost";
     private final int PORT = 2018;
@@ -34,6 +35,7 @@ public class SceneManager {
         this.primaryStage = primaryStage;
         this.resourceBundle = ResourceBundle.getBundle("locales.Locale", lang);
         primaryStage.setTitle(resourceBundle.getString("title.app"));
+        this.closed = false;
     }
 
     public void switchSceneTo (Scenes scene) {
@@ -60,7 +62,6 @@ public class SceneManager {
                 }
             } catch (IOException e) {
                 //TODO
-                disconnect();
                 e.printStackTrace();
             }
             primaryStage.show();
@@ -92,16 +93,26 @@ public class SceneManager {
             session.send(message);
         }
     }
-
-    public void disconnect () {
-
-        switchSceneTo(Scenes.WELCOME);
-
-        if (socket == null || socket.isClosed())  return;
-        try {
-            socket.close();
-        } catch (IOException e) {
+    
+    public void onException(Exception e) {
+        if(!closed) {
             e.printStackTrace();
+            Platform.runLater(() -> {
+                DialogManager.showWarning(
+                        SceneManager.translate("error.smth-went-wrong"),
+                        SceneManager.translate("error.connection-failed"));
+            });
         }
+
+    }
+
+    public void logout () {
+        if(!closed) switchSceneTo(SceneManager.Scenes.AUTHENTICATION);
+    }
+
+    public void disconnect() {
+        System.out.println("DISCONNECTING");
+        closed = true;
+        session.disconnect();
     }
 }

@@ -60,10 +60,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
 
     @Override
     public void onException(Session session, Exception e) {
-        DialogManager.showWarning(
-                SceneManager.translate("error.connection-failed"),
-                SceneManager.translate("error.smth-went-wrong"));
-        e.printStackTrace();
+        SceneManager.getInstance().onException(e);
     }
 
     @Override

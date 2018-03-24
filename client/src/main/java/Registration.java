@@ -63,10 +63,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
 
     @Override
     public void onException(Session session, Exception e) {
-        DialogManager.showWarning(
-                SceneManager.translate("message.sign-up"),
-                SceneManager.translate("error.connection-failed"));
-        e.printStackTrace();
+        SceneManager.getInstance().onException(e);
     }
 
 

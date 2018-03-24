@@ -87,17 +87,12 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void onDisconnect(Session session) {
-        System.out.println("client - inside onDisconnect method");
-        SceneManager.getInstance().disconnect();
+        SceneManager.getInstance().logout();
     }
 
     @Override
     public void onException(Session session, Exception e) {
-        e.printStackTrace();
-        DialogManager.showWarning(
-                SceneManager.translate("error.connection-failed"),
-                SceneManager.translate("error.smth-went-wrong"));
-        SceneManager.getInstance().disconnect();
+        SceneManager.getInstance().onException(e);
     }
 
     @FXML

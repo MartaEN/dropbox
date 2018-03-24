@@ -12,6 +12,13 @@ public class Main extends Application {
         SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WELCOME);
     }
 
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        SceneManager.getInstance().disconnect();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
