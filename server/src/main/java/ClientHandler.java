@@ -177,10 +177,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         if (file.exists()) {
             if (file.isFile()) session.sendFile(file);
         } else {
-            JSONObject message = new JSONObject();
-            message.put(Commands.MESSAGE, Commands.FAIL);
-            message.put(Commands.FAIL_DETAILS, "Файл не найден");
-            send(message);
+            sendErrorMessage("File not found");
         }
     }
 
@@ -189,10 +186,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         try {
             FileProcessor.rename(activeDirectory.resolve(oldName), newName);
         } catch (FileProcessorException e){
-            JSONObject message = new JSONObject();
-            message.put(Commands.MESSAGE, Commands.FAIL);
-            message.put(Commands.FAIL_DETAILS, e.getMessage());
-            send(message);
+            sendErrorMessage(e.getMessage());
         }
         listFiles();
     }
@@ -202,10 +196,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         try {
             FileProcessor.delete(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
-            JSONObject message = new JSONObject();
-            message.put(Commands.MESSAGE, Commands.FAIL);
-            message.put(Commands.FAIL_DETAILS, e.getMessage());
-            send(message);
+            sendErrorMessage(e.getMessage());
         }
         listFiles();
     }
@@ -215,10 +206,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         try {
             FileProcessor.createDirectory(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
-            JSONObject message = new JSONObject();
-            message.put(Commands.MESSAGE, Commands.FAIL);
-            message.put(Commands.FAIL_DETAILS, e.getMessage());
-            send(message);
+            sendErrorMessage(e.getMessage());
         }
         listFiles();
     }
@@ -239,10 +227,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         if(Files.exists(target) && Files.isDirectory(target)) {
             activeDirectory = target;
         } else {
-            JSONObject message = new JSONObject();
-            message.put(Commands.MESSAGE, Commands.FAIL);
-            message.put(Commands.FAIL_DETAILS, "Путь не найден");
-            send(message);
+            sendErrorMessage("Directory not found");
         }
         listFiles();
     }
