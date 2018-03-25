@@ -15,6 +15,7 @@ public enum Commands {
     SIZE,
 
     LIST_CONTENTS,
+    FILE_LIST,
     DIRECTORY_DOWN,
     DIRECTORY_UP,
     CREATE_DIRECTORY,

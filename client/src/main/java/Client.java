@@ -45,8 +45,6 @@ public class Client implements ConnectionListener, FileManager {
     public void onInput(Session session, Object input) {
 
         Platform.runLater(()-> {
-
-            // обрабатываем служебные сообщения с сервера
             if (input instanceof JSONObject) {
 
                 JSONObject json = (JSONObject)input;
@@ -62,19 +60,14 @@ public class Client implements ConnectionListener, FileManager {
                         appendFile((String)json.get(Commands.FILE),(long)json.get(Commands.SIZE), (long)json.get(Commands.BYTES),
                                 (byte[])json.get(Commands.DATA));
                         break;
+                    case FILE_LIST:
+                        listFiles((MyFileList)json.get(Commands.FILE_LIST));
+                        break;
                     case OK:
                         break;
                     default:
                         System.out.println("client - THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM SERVER: " + input);
                 }
-
-            // или обрабатываем входящие файлы
-            } else if (input instanceof File) {
-                saveFile((File) input);
-
-            // или обрабатываем полученный список файлов
-            } else if (input instanceof MyFileList){
-                listFiles((MyFileList)input);
 
             } else {
                 System.out.println("client - THIS SHOULD NOT HAPPEN - " +

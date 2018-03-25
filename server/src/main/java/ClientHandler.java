@@ -76,9 +76,6 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
                     server.log(session, "Server - THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM USER");
             }
 
-        } else if (input instanceof File){
-            uploadFile((File)input);
-
         } else {
             server.log(session, "Server - THIS SHOULD NOT HAPPEN - UNKNOWN TYPE OF INCOMING MESSAGE");
         }
@@ -262,7 +259,11 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             fileList.add(new MyFile(f.isFile()? MyFile.FileType.FILE: MyFile.FileType.DIR,
                     f.getName(), (int)f.length()/1024));
         }
-        session.send(new MyFileList(fileList));
+
+        JSONObject message = new JSONObject();
+        message.put(Commands.MESSAGE, Commands.FILE_LIST);
+        message.put(Commands.FILE_LIST, new MyFileList(fileList));
+        send(message);
     }
 
     @Override
