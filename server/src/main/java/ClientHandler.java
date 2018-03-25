@@ -1,6 +1,6 @@
 import org.json.simple.JSONObject;
 
-import java.io.File;
+import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,7 +23,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
 
     @Override
     public void onConnect(Session session) {
-        server.log(session, "CONNECTION ATTEMPT");
+        server.log(session, "CONNECTED");
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         if (input instanceof JSONObject) {
 
             JSONObject json = (JSONObject)input;
-            Commands cmd = (Commands)json.get(Commands.REQUEST);
+            Commands cmd = (Commands)json.get(Commands.MESSAGE);
 
             switch (cmd) {
                 case CHECK_NEW_USER_NAME:
@@ -52,6 +52,10 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
                     break;
                 case DOWNLOAD:
                     downloadFile((String)json.get(Commands.FILE_NAME));
+                    break;
+                case FILE:
+                    appendFile((String)json.get(Commands.FILE),(long)json.get(Commands.SIZE), (long)json.get(Commands.BYTES),
+                            (byte[])json.get(Commands.DATA));
                     break;
                 case LIST_CONTENTS:
                     listFiles();
@@ -80,6 +84,19 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         }
     }
 
+    private void appendFile(String name, long size, long read, byte[] data) {
+        System.out.println("Uploading "+name +": declared size "+size+", read so far: "+ read);
+        Path path = activeDirectory.resolve(name);
+        File file = new File(path.toString());
+        file.setReadable(false);
+        try (OutputStream output = new BufferedOutputStream(new FileOutputStream(file, true), data.length)) {
+                output.write(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(read == size) file.setReadable(true);
+    }
+
     @Override
     public void onDisconnect(Session session) {
     }
@@ -95,15 +112,15 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         if( server.getAuthService().loginAccepted(user,password)) {
             activeDirectory = activeDirectory.resolve(user);
             if (FileProcessor.fileExists(activeDirectory)) {
-                message.put(Commands.REPLY, Commands.ADMITTED);
+                message.put(Commands.MESSAGE, Commands.ADMITTED);
             } else {
-                message.put(Commands.REPLY, Commands.FAIL);
+                message.put(Commands.MESSAGE, Commands.FAIL);
                 message.put(Commands.FAIL_DETAILS, "Ошибка подключения к удаленному репозиторию");
                 server.log(session,"FAIL - USER DIRECTORY IS MISSING - " +
                         "USER IS AUTHORIZED BUT CANNOT ACCESS HIS REPOSITORY !!!");
             }
         } else {
-            message.put(Commands.REPLY, Commands.NOT_ADMITTED);
+            message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);
         }
         send(message);
         //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном авторизации, а не главным
@@ -117,14 +134,14 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             activeDirectory = SERVER_ROOT.resolve(user);
             try {
                 FileProcessor.createDirectory(activeDirectory);
-                message.put(Commands.REPLY, Commands.ADMITTED);
+                message.put(Commands.MESSAGE, Commands.ADMITTED);
             } catch (FileProcessorException e) {
-                message.put(Commands.REPLY, Commands.FAIL);
+                message.put(Commands.MESSAGE, Commands.FAIL);
                 message.put(Commands.FAIL_DETAILS, "Ошибка соединения. Повторите попытку позднее");
                 server.log(session,"FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
             }
         } else {
-            message.put(Commands.REPLY, Commands.NOT_ADMITTED);
+            message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);
         }
         send(message);
         //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном регистрации, а не главным
@@ -135,9 +152,9 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
     public void checkNewUserName(String name) {
         JSONObject message = new JSONObject();
         if (server.getAuthService().newUserNameAccepted(name)) {
-            message.put(Commands.REPLY, Commands.USERNAME_OK);
+            message.put(Commands.MESSAGE, Commands.USERNAME_OK);
         } else {
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, "Пользователь с таким именем уже есть");
         }
         send(message);
@@ -149,7 +166,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             FileProcessor.saveFile(activeDirectory, input);
         } catch (FileProcessorException e) {
             JSONObject message = new JSONObject();
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, e.getMessage());
             send(message);
         }
@@ -165,10 +182,10 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
     public void downloadFile(String fileName) {
         File file = new File (activeDirectory.resolve(fileName).toString());
         if (file.exists()) {
-            if (file.isFile()) session.send(file);
+            if (file.isFile()) session.sendFile(file);
         } else {
             JSONObject message = new JSONObject();
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, "Файл не найден");
             send(message);
         }
@@ -180,7 +197,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             FileProcessor.rename(activeDirectory.resolve(oldName), newName);
         } catch (FileProcessorException e){
             JSONObject message = new JSONObject();
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, e.getMessage());
             send(message);
         }
@@ -193,7 +210,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             FileProcessor.delete(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
             JSONObject message = new JSONObject();
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, e.getMessage());
             send(message);
         }
@@ -206,7 +223,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             FileProcessor.createDirectory(activeDirectory.resolve(name));
         } catch (FileProcessorException e) {
             JSONObject message = new JSONObject();
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, e.getMessage());
             send(message);
         }
@@ -230,7 +247,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             activeDirectory = target;
         } else {
             JSONObject message = new JSONObject();
-            message.put(Commands.REPLY, Commands.FAIL);
+            message.put(Commands.MESSAGE, Commands.FAIL);
             message.put(Commands.FAIL_DETAILS, "Путь не найден");
             send(message);
         }
@@ -253,7 +270,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
 
     private void sendOK () {
         JSONObject message = new JSONObject();
-        message.put(Commands.REPLY, Commands.OK);
+        message.put(Commands.MESSAGE, Commands.OK);
         session.send(message);
     }
 

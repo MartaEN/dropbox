@@ -3,7 +3,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -76,7 +76,7 @@ public class SceneManager {
             // и при этом сообщение идет из рабочего окна - вызываем обработку исключения в связи с обрывом соединения
             if ( sender.getClass() == Client.class) {
                 sender.onException(session, new IOException("Connection lost"));
-                // для окон авторизации и регистрации поднимаем сокет, открываем сессию, отсылаем сообщение
+            // для окон авторизации и регистрации поднимаем сокет, открываем сессию, отсылаем сообщение
             } else if (sender.getClass() == Authentication.class || sender.getClass() == Registration.class) {
                 try {
                     socket = new Socket(IP_ADDRESS, PORT);
@@ -93,6 +93,10 @@ public class SceneManager {
             session.send(message);
         }
     }
+
+    public void sendFile (File file) {
+        session.sendFile(file);
+    }
     
     public void onException(Exception e) {
         if(!closed) {
@@ -103,7 +107,6 @@ public class SceneManager {
                         SceneManager.translate("error.connection-failed"));
             });
         }
-
     }
 
     public void logout () {

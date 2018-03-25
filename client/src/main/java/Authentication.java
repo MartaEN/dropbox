@@ -10,7 +10,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
     @FXML private PasswordField passwordField;
     @FXML private void initialize() {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.TEST);
+        message.put(Commands.MESSAGE, Commands.TEST);
         SceneManager.getInstance().send(this, message);
     }
 
@@ -27,7 +27,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
             if (input instanceof JSONObject) {
 
                 JSONObject json = (JSONObject)input;
-                Commands cmd = (Commands)json.get(Commands.REPLY);
+                Commands cmd = (Commands)json.get(Commands.MESSAGE);
 
                 switch (cmd) {
                     case ADMITTED:
@@ -66,7 +66,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
     @Override
     public void signIn(String user, String password) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.SIGN_IN);
+        message.put(Commands.MESSAGE, Commands.SIGN_IN);
         message.put(Commands.USERNAME, user);
         message.put(Commands.PASSWORD, password);
         SceneManager.getInstance().send(this, message);

@@ -1,7 +1,6 @@
 public enum Commands {
 
-    REQUEST,
-    REPLY,
+    MESSAGE,
 
     DELETE,
     RENAME,
@@ -9,6 +8,11 @@ public enum Commands {
     FILE_NAME,
     NEW_FILE_NAME,
     DIRECTORY_NAME,
+
+    FILE,
+    DATA,
+    BYTES,
+    SIZE,
 
     LIST_CONTENTS,
     DIRECTORY_DOWN,

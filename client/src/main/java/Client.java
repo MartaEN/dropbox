@@ -6,8 +6,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import org.json.simple.JSONObject;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 
 public class Client implements ConnectionListener, FileManager {
@@ -34,9 +33,7 @@ public class Client implements ConnectionListener, FileManager {
             }
         }
 
-        JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.LIST_CONTENTS);
-        SceneManager.getInstance().send(this, message);
+        requestFileListUpdate();
     }
 
     private final Path ROOT = Paths.get("_client_downloads"); // TODO добавить возможность выбора клиентом
@@ -53,13 +50,17 @@ public class Client implements ConnectionListener, FileManager {
             if (input instanceof JSONObject) {
 
                 JSONObject json = (JSONObject)input;
-                Commands cmd = (Commands)json.get(Commands.REPLY);
+                Commands cmd = (Commands)json.get(Commands.MESSAGE);
 
                 switch (cmd) {
                     case FAIL:
                         DialogManager.showWarning(
                                 SceneManager.translate("error.operation-fail"),
                                 (String) json.getOrDefault(Commands.FAIL_DETAILS, SceneManager.translate("error.smth-went-wrong")));
+                        break;
+                    case FILE:
+                        appendFile((String)json.get(Commands.FILE),(long)json.get(Commands.SIZE), (long)json.get(Commands.BYTES),
+                                (byte[])json.get(Commands.DATA));
                         break;
                     case OK:
                         break;
@@ -78,9 +79,7 @@ public class Client implements ConnectionListener, FileManager {
             } else {
                 System.out.println("client - THIS SHOULD NOT HAPPEN - " +
                         "UNKNOWN TYPE OF INCOMING MESSAGE IN MAIN SCREEN: " + input);
-                JSONObject message = new JSONObject();
-                message.put(Commands.REQUEST, Commands.LIST_CONTENTS);
-                SceneManager.getInstance().send(this, message);
+                requestFileListUpdate();
             }
         });
     }
@@ -118,9 +117,9 @@ public class Client implements ConnectionListener, FileManager {
 
     @Override
     public void uploadFile (File file) {
-        SceneManager.getInstance().send(this, file);
+        SceneManager.getInstance().sendFile(file);
+        requestFileListUpdate();
     }
-
 
     @FXML private void downloadFile () {
         MyFile selectedFile = table.getSelectionModel().getSelectedItem();
@@ -131,7 +130,7 @@ public class Client implements ConnectionListener, FileManager {
     @Override
     public void downloadFile(String fileName) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.DOWNLOAD);
+        message.put(Commands.MESSAGE, Commands.DOWNLOAD);
         message.put(Commands.FILE_NAME, fileName);
         SceneManager.getInstance().send(this,message);
     }
@@ -145,6 +144,19 @@ public class Client implements ConnectionListener, FileManager {
                     SceneManager.translate("error.error"),
                     SceneManager.translate("error.operation-fail"));
         }
+    }
+
+    private void appendFile(String name, long size, long read, byte[] data) {
+        System.out.println("Uploading "+name +": declared size "+size+", read so far: "+ read);
+        Path path = ROOT.resolve(name);
+        File file = new File(path.toString());
+        file.setReadable(false);
+        try (OutputStream output = new BufferedOutputStream(new FileOutputStream(file, true), data.length)) {
+            output.write(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(read == size) file.setReadable(true);
     }
 
     @FXML
@@ -180,7 +192,7 @@ public class Client implements ConnectionListener, FileManager {
     @Override
     public void rename(String oldName, String newName) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.RENAME);
+        message.put(Commands.MESSAGE, Commands.RENAME);
         message.put(Commands.FILE_NAME, oldName);
         message.put(Commands.NEW_FILE_NAME, newName);
         SceneManager.getInstance().send(this, message);
@@ -208,7 +220,7 @@ public class Client implements ConnectionListener, FileManager {
     @Override
     public void delete(String name) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.DELETE);
+        message.put(Commands.MESSAGE, Commands.DELETE);
         message.put(Commands.FILE_NAME, name);
         SceneManager.getInstance().send(this, message);
     }
@@ -233,7 +245,7 @@ public class Client implements ConnectionListener, FileManager {
     @Override
     public void createDirectory (String name) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.CREATE_DIRECTORY);
+        message.put(Commands.MESSAGE, Commands.CREATE_DIRECTORY);
         message.put(Commands.DIRECTORY_NAME, name);
         SceneManager.getInstance().send(this, message);
     }
@@ -242,14 +254,14 @@ public class Client implements ConnectionListener, FileManager {
     @Override
     public void directoryUp() {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.DIRECTORY_UP);
+        message.put(Commands.MESSAGE, Commands.DIRECTORY_UP);
         SceneManager.getInstance().send(this, message);
     }
 
     @Override
     public void directoryDown(String directoryName) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.DIRECTORY_DOWN);
+        message.put(Commands.MESSAGE, Commands.DIRECTORY_DOWN);
         message.put(Commands.DIRECTORY_NAME, directoryName);
         SceneManager.getInstance().send(this, message);
     }
@@ -280,6 +292,12 @@ public class Client implements ConnectionListener, FileManager {
                 }
             }
         }
+    }
+
+    private void requestFileListUpdate() {
+        JSONObject message = new JSONObject();
+        message.put(Commands.MESSAGE, Commands.LIST_CONTENTS);
+        SceneManager.getInstance().send(this, message);
     }
 
     private boolean fileNameIsValid (String fileName) {

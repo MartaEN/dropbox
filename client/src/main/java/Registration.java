@@ -11,7 +11,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
 
     @FXML private void initialize() {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.TEST);
+        message.put(Commands.MESSAGE, Commands.TEST);
         SceneManager.getInstance().send(this, message);
     }
     @FXML private void switchToAuthentication () { SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.AUTHENTICATION); }
@@ -29,7 +29,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
             if (input instanceof JSONObject) {
 
                 JSONObject json = (JSONObject) input;
-                Commands cmd = (Commands) json.get(Commands.REPLY);
+                Commands cmd = (Commands) json.get(Commands.MESSAGE);
 
                 switch (cmd) {
                     case ADMITTED:
@@ -83,7 +83,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
     @Override
     public void checkNewUserName(String name) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.CHECK_NEW_USER_NAME);
+        message.put(Commands.MESSAGE, Commands.CHECK_NEW_USER_NAME);
         message.put(Commands.USERNAME, name);
         SceneManager.getInstance().send(this, message);
     }
@@ -114,7 +114,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
     @Override
     public void signUp(String user, String password) {
         JSONObject message = new JSONObject();
-        message.put(Commands.REQUEST, Commands.SIGN_UP);
+        message.put(Commands.MESSAGE, Commands.SIGN_UP);
         message.put(Commands.USERNAME, user);
         message.put(Commands.PASSWORD, password);
         SceneManager.getInstance().send(this, message);

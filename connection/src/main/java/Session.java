@@ -1,10 +1,14 @@
+import org.json.simple.JSONObject;
+
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class Session implements Runnable {
 
     private final Socket socket;
     private ConnectionListener connectionListener;
+    private final int BUFFER_SIZE = (int)Math.pow(2,20);
 
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -70,12 +74,41 @@ public class Session implements Runnable {
         }
     }
 
-    private synchronized void disconnect() {
+    public void sendFile (File file) {
+        System.out.println(this + ": sending "+file.getName());
+        try (InputStream input = new BufferedInputStream(new FileInputStream(file), BUFFER_SIZE)) {
+            byte [] buffer = new byte [BUFFER_SIZE];
+            long size = file.length();
+            int bytesRead;
+            long totalBytesRead = 0;
+            while ((bytesRead = input.read(buffer))!=-1) {
+                JSONObject message = new JSONObject();
+                message.put(Commands.MESSAGE, Commands.FILE);
+                message.put(Commands.FILE, file.getName());
+                message.put(Commands.SIZE, size);
+                message.put(Commands.BYTES, totalBytesRead+=bytesRead);
+                if(bytesRead == buffer.length) message.put (Commands.DATA, buffer);
+                else message.put (Commands.DATA, Arrays.copyOf(buffer,bytesRead));
+                send(message);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public synchronized void disconnect() {
         Thread.currentThread().interrupt();
         try {
-            socket.close();
+            in.close();
+            out.close();
         } catch (IOException e) {
-            connectionListener.onException(this, e);
+            e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
