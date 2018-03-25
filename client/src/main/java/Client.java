@@ -97,21 +97,21 @@ public class Client implements ConnectionListener, FileManager {
     @FXML
     private void uploadFile() {
 
-        String title = SceneManager.translate("title.upload");
+        String title = SceneManager.translate("title.select-file");
 
-        String path = DialogManager.getInput(title, SceneManager.translate("prompt.path"));
+        File file = DialogManager.selectFile(title);
 
-        File file = new File (path);
-
-        if (file.exists()) {
-            if(file.isFile()) {
-                uploadFile(file);
+        if (file != null) {
+            if (file.exists()) {
+                if (file.isFile()) {
+                    uploadFile(file);
+                } else {
+                    //TODO что делать с папками
+                    DialogManager.showWarning(title, SceneManager.translate("message.cannot-upload-directory"));
+                }
             } else {
-                //TODO что делать с папками
-                DialogManager.showWarning(title, SceneManager.translate("message.cannot-upload-directory"));
+                DialogManager.showWarning(title, SceneManager.translate("error.file-not-found"));
             }
-        } else {
-            DialogManager.showWarning(title, SceneManager.translate("error.file-not-found"));
         }
     }
 

@@ -2,6 +2,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
+import javafx.stage.FileChooser;
+
+import java.io.File;
 
 public class DialogManager {
 
@@ -20,6 +23,12 @@ public class DialogManager {
         request.setContentText(message);
         request.showAndWait();
         return request.getResult();
+    }
+
+    static File selectFile (String title) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+        return fileChooser.showOpenDialog(SceneManager.getWindow());
     }
 
     static boolean reconfirmed (String title, String message) {

@@ -2,6 +2,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.io.*;
 import java.net.Socket;
@@ -30,6 +31,8 @@ public class SceneManager {
     public static SceneManager getInstance() { return thisInstance; }
 
     public static String translate (String message) { return thisInstance.resourceBundle.getString(message); }
+
+    public static Window getWindow () { return getInstance().primaryStage; }
 
     public void init (Stage primaryStage, Locale lang) {
         this.primaryStage = primaryStage;
