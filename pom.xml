@@ -31,6 +31,7 @@
         <module>fileprocessor</module>
         <module>authentication</module>
         <module>client</module>
+        <module>downloadmanager</module>
     </modules>
 
     <properties>

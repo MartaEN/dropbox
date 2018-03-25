@@ -75,25 +75,28 @@ public class Session implements Runnable {
     }
 
     public void sendFile (File file) {
-        System.out.println(this + ": sending "+file.getName());
-        try (InputStream input = new BufferedInputStream(new FileInputStream(file), BUFFER_SIZE)) {
-            byte [] buffer = new byte [BUFFER_SIZE];
-            long size = file.length();
-            int bytesRead;
-            long totalBytesRead = 0;
-            while ((bytesRead = input.read(buffer))!=-1) {
-                JSONObject message = new JSONObject();
-                message.put(Commands.MESSAGE, Commands.FILE);
-                message.put(Commands.FILE, file.getName());
-                message.put(Commands.SIZE, size);
-                message.put(Commands.BYTES, totalBytesRead+=bytesRead);
-                if(bytesRead == buffer.length) message.put (Commands.DATA, buffer);
-                else message.put (Commands.DATA, Arrays.copyOf(buffer,bytesRead));
-                send(message);
+        Thread t = new Thread (() -> {
+            System.out.println(this + ": sending "+file.getName());
+            try (InputStream input = new BufferedInputStream(new FileInputStream(file), BUFFER_SIZE)) {
+                byte [] buffer = new byte [BUFFER_SIZE];
+                long size = file.length();
+                int bytesRead;
+                int sequence = 0;
+                while ((bytesRead = input.read(buffer))!=-1) {
+                    JSONObject message = new JSONObject();
+                    message.put(Commands.MESSAGE, Commands.FILE);
+                    message.put(Commands.FILE, file);
+                    message.put(Commands.SEQUENCE, ++sequence);
+                    message.put(Commands.BYTES_LEFT, size-=bytesRead);
+                    if(bytesRead == buffer.length) message.put (Commands.DATA, buffer);
+                    else message.put (Commands.DATA, Arrays.copyOf(buffer,bytesRead));
+                    send(message);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
+        t.start();
     }
 
     public synchronized void disconnect() {

@@ -21,6 +21,11 @@
             <artifactId>fileprocessor</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.marta</groupId>
+            <artifactId>downloadmanager</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 

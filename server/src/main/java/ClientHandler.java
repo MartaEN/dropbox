@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ClientHandler implements ConnectionListener, FileManager, SignInChecker, SignUpChecker {
 
@@ -54,7 +55,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
                     downloadFile((String)json.get(Commands.FILE_NAME));
                     break;
                 case FILE:
-                    appendFile((String)json.get(Commands.FILE),(long)json.get(Commands.SIZE), (long)json.get(Commands.BYTES),
+                    saveFile((File)json.get(Commands.FILE),(int)json.get(Commands.SEQUENCE), (long)json.get(Commands.BYTES_LEFT),
                             (byte[])json.get(Commands.DATA));
                     break;
                 case LIST_CONTENTS:
@@ -81,18 +82,6 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         }
     }
 
-    private void appendFile(String name, long size, long read, byte[] data) {
-        System.out.println("Uploading "+name +": declared size "+size+", read so far: "+ read);
-        Path path = activeDirectory.resolve(name);
-        File file = new File(path.toString());
-        file.setReadable(false);
-        try (OutputStream output = new BufferedOutputStream(new FileOutputStream(file, true), data.length)) {
-                output.write(data);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if(read == size) file.setReadable(true);
-    }
 
     @Override
     public void onDisconnect(Session session) {
@@ -162,17 +151,24 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
         try {
             FileProcessor.saveFile(activeDirectory, input);
         } catch (FileProcessorException e) {
-            JSONObject message = new JSONObject();
-            message.put(Commands.MESSAGE, Commands.FAIL);
-            message.put(Commands.FAIL_DETAILS, e.getMessage());
-            send(message);
+            sendErrorMessage(e.getMessage());
         }
         listFiles();
     }
 
     @Override
-    public void saveFile (File file) {
-        uploadFile(file);
+    public void saveFile(File file, int sequence, long bytesLeft, byte[] data) {
+
+        System.out.println("Uploading "+file.getName() +": package no "+sequence+", bytes left: "+ bytesLeft);
+
+        try {
+            if(sequence == 1) DownloadManager.getInstance().enlistDownload(activeDirectory, file);
+            DownloadManager.getInstance().download(file, sequence, data);
+        } catch (DownloadManagerException e) {
+            sendErrorMessage(e.getMessage());
+            return;
+        }
+        listFiles();
     }
 
     @Override
@@ -272,6 +268,13 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
     private void sendOK () {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.OK);
+        session.send(message);
+    }
+
+    private void sendErrorMessage (String errorDescription) {
+        JSONObject message = new JSONObject();
+        message.put(Commands.MESSAGE, Commands.FAIL);
+        message.put(Commands.FAIL_DETAILS, errorDescription);
         session.send(message);
     }
 

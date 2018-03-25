@@ -8,6 +8,7 @@ import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.HashSet;
 
 public class Client implements ConnectionListener, FileManager {
 
@@ -18,6 +19,7 @@ public class Client implements ConnectionListener, FileManager {
     @FXML private TableColumn<MyFile, String> colType;
     @FXML private TableColumn<MyFile, String> colName;
     @FXML private TableColumn<MyFile, String> colSize;
+    private HashSet<File> uploads;
 
     @FXML private void initialize() {
 
@@ -32,6 +34,8 @@ public class Client implements ConnectionListener, FileManager {
                 e.printStackTrace();
             }
         }
+
+        uploads = new HashSet<>();
 
         requestFileListUpdate();
     }
@@ -57,7 +61,7 @@ public class Client implements ConnectionListener, FileManager {
                                 (String) json.getOrDefault(Commands.FAIL_DETAILS, SceneManager.translate("error.smth-went-wrong")));
                         break;
                     case FILE:
-                        appendFile((String)json.get(Commands.FILE),(long)json.get(Commands.SIZE), (long)json.get(Commands.BYTES),
+                        saveFile((File)json.get(Commands.FILE),(int)json.get(Commands.SEQUENCE), (long)json.get(Commands.BYTES_LEFT),
                                 (byte[])json.get(Commands.DATA));
                         break;
                     case FILE_LIST:
@@ -94,18 +98,30 @@ public class Client implements ConnectionListener, FileManager {
 
         File file = DialogManager.selectFile(title);
 
-        if (file != null) {
-            if (file.exists()) {
-                if (file.isFile()) {
-                    uploadFile(file);
-                } else {
-                    //TODO что делать с папками
-                    DialogManager.showWarning(title, SceneManager.translate("message.cannot-upload-directory"));
-                }
-            } else {
-                DialogManager.showWarning(title, SceneManager.translate("error.file-not-found"));
-            }
+        title = SceneManager.translate("title.upload");
+
+        if (file == null) return;
+
+        if (!file.exists()) {
+            DialogManager.showWarning(title, SceneManager.translate("error.file-not-found"));
+            return;
         }
+
+        if (!file.isFile()) {
+            //TODO что делать с папками
+            DialogManager.showWarning(title, SceneManager.translate("message.cannot-upload-directory"));
+            return;
+        }
+
+        if (uploads.contains(file)) {
+            //TODO как снимать отметку о нахождении в загрузке
+            DialogManager.showWarning(title, SceneManager.translate("message.already-being-uploaded"));
+            return;
+        }
+
+        uploads.add(file);
+        uploadFile(file);
+
     }
 
     @Override
@@ -129,28 +145,19 @@ public class Client implements ConnectionListener, FileManager {
     }
 
     @Override
-    public void saveFile(File input) {
+    public void saveFile(File file, int sequence, long bytesLeft, byte[] data) {
+
+        System.out.println("Downloading "+file.getName() +": package no "+sequence+", bytes left: "+ bytesLeft);
+
         try {
-            FileProcessor.saveFile(ROOT, input);
-        } catch (FileProcessorException e) {
-            DialogManager.showWarning(
-                    SceneManager.translate("error.error"),
-                    SceneManager.translate("error.operation-fail"));
+            if(sequence == 1) DownloadManager.getInstance().enlistDownload(ROOT, file);
+            DownloadManager.getInstance().download(file, sequence, data);
+        } catch (DownloadManagerException e) {
+            DialogManager.showWarning(SceneManager.translate("title.download"), e.getMessage());
+            return;
         }
     }
 
-    private void appendFile(String name, long size, long read, byte[] data) {
-        System.out.println("Uploading "+name +": declared size "+size+", read so far: "+ read);
-        Path path = ROOT.resolve(name);
-        File file = new File(path.toString());
-        file.setReadable(false);
-        try (OutputStream output = new BufferedOutputStream(new FileOutputStream(file, true), data.length)) {
-            output.write(data);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if(read == size) file.setReadable(true);
-    }
 
     @FXML
     private void rename() {

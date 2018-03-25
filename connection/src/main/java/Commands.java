@@ -11,8 +11,9 @@ public enum Commands {
 
     FILE,
     DATA,
-    BYTES,
+    BYTES_LEFT,
     SIZE,
+    SEQUENCE,
 
     LIST_CONTENTS,
     FILE_LIST,
