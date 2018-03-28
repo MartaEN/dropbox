@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 public class ClientHandler implements ConnectionListener, FileManager, SignInChecker, SignUpChecker {
 
@@ -24,7 +25,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
 
     @Override
     public void onConnect(Session session) {
-        server.log(session, "CONNECTED");
+        Logger.getGlobal().info(session+ ": CONNECTED");
     }
 
     @Override
@@ -74,11 +75,11 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
                     sendOK();
                     break;
                 default:
-                    server.log(session, "Server - THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM USER");
+                    Logger.getGlobal().warning(session + ": THIS SHOULD NOT HAPPEN - UNKNOWN COMMAND FROM USER");
             }
 
         } else {
-            server.log(session, "Server - THIS SHOULD NOT HAPPEN - UNKNOWN TYPE OF INCOMING MESSAGE");
+            Logger.getGlobal().warning(session + ": THIS SHOULD NOT HAPPEN - UNKNOWN TYPE OF INCOMING MESSAGE");
         }
     }
 
@@ -89,7 +90,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
 
     @Override
     public void onException(Session session, Exception e) {
-        server.log(session, "DISCONNECTED");
+        Logger.getGlobal().info(session + ": DISCONNECTED");
     }
 
     @Override
@@ -102,7 +103,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             } else {
                 message.put(Commands.MESSAGE, Commands.FAIL);
                 message.put(Commands.FAIL_DETAILS, "Ошибка подключения к удаленному репозиторию");
-                server.log(session,"FAIL - USER DIRECTORY IS MISSING - " +
+                Logger.getGlobal().severe(session + ": FAIL - USER DIRECTORY IS MISSING - " +
                         "USER IS AUTHORIZED BUT CANNOT ACCESS HIS REPOSITORY !!!");
             }
         } else {
@@ -124,7 +125,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             } catch (FileProcessorException e) {
                 message.put(Commands.MESSAGE, Commands.FAIL);
                 message.put(Commands.FAIL_DETAILS, "Ошибка соединения. Повторите попытку позднее");
-                server.log(session,"FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
+                Logger.getGlobal().severe(session + ": FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
             }
         } else {
             message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);

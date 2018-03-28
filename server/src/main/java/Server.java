@@ -2,10 +2,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 public class Server {
 
@@ -25,20 +24,20 @@ public class Server {
         try {
             // check root directory
             if(FileProcessor.fileExists(ROOT)) {
-                log("ROOT DIRECTORY " + ROOT);
+                Logger.getGlobal().info("ROOT DIRECTORY " + ROOT);
             } else {
                 FileProcessor.createDirectory(ROOT);
-                log("ATTENTION! --- NEW ROOT DIRECTORY CREATED " + ROOT);
+                Logger.getGlobal().warning("ATTENTION! --- NEW ROOT DIRECTORY CREATED " + ROOT);
             }
             // start authentication service
             authService = new AuthService(ROOT.resolve(USERS_DB_NAME).toString());
-            log(authService.start());
+            Logger.getGlobal().info(authService.start());
             // open thread pool
             threadPool = Executors.newCachedThreadPool();
             // open server socket
             serverSocket = new ServerSocket(PORT);
             // ready
-            log("SERVER STARTED");
+            Logger.getGlobal().info("SERVER STARTED");
 
             while (true) {
                 Socket socket = serverSocket.accept();
@@ -46,11 +45,11 @@ public class Server {
             }
 
         } catch (FileProcessorException e) {
-            log("ERROR INITIALIZING ROOT DIRECTORY: " + e.getMessage());
+            Logger.getGlobal().severe("ERROR INITIALIZING ROOT DIRECTORY: " + e.getMessage());
         } catch (AuthServiceException e) {
-            log(e.getMessage());
+            Logger.getGlobal().severe(e.getMessage());
         } catch (IOException e) {
-            log("ERROR CONNECTING TO SOCKET: " + e.getMessage());
+            Logger.getGlobal().severe("ERROR CONNECTING TO SOCKET: " + e.getMessage());
 
         } finally {
             if(authService != null) authService.stop();
@@ -60,20 +59,7 @@ public class Server {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            log("SERVER STOPPED");
+            Logger.getGlobal().info("SERVER STOPPED");
         }
-    }
-
-    private void log (String message) {
-        System.out.println(time()+ " " + message);
-    }
-
-    void log (Session session, String message) {
-        System.out.println(time()+ " " + session.toString() +": " + message);
-    }
-
-    private String time () {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-        return (sdf.format(new Date(System.currentTimeMillis()))+" ");
     }
 }
