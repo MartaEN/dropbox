@@ -15,7 +15,7 @@
             <Font name="System Bold" size="14.0" />
          </font>
       </Label>
-      <Label layoutX="32.0" layoutY="60.0" text="test run:  try login1 + pass, login2 + pass" textFill="RED" />
+      <Label layoutX="32.0" layoutY="60.0" text="test run:  try login1 + pass1, login2 + pass2" textFill="RED" />
       <TextField fx:id="loginField" layoutX="169.0" layoutY="91.0" prefHeight="25.0" prefWidth="200.0" />
       <PasswordField fx:id="passwordField" layoutX="169.0" layoutY="136.0" onAction="#signIn" prefHeight="25.0" prefWidth="200.0" />
       <Label layoutX="32.0" layoutY="95.0" prefHeight="17.0" prefWidth="149.0" text="%user.name" />

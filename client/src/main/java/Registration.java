@@ -3,6 +3,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import org.json.simple.JSONObject;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class Registration implements ConnectionListener, SignUpChecker {
 
     @FXML private TextField username;
@@ -116,7 +119,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.SIGN_UP);
         message.put(Commands.USERNAME, user);
-        message.put(Commands.PASSWORD, password);
+        message.put(Commands.PASSWORD, hash(password));
         SceneManager.getInstance().send(this, message);
     }
 
@@ -142,6 +145,16 @@ public class Registration implements ConnectionListener, SignUpChecker {
                             || (ch >= 'A' && ch <= 'Z')
                             || (ch >= '0' && ch <= '9'));
         return false;
+    }
+
+    private String hash (String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            digest.update(input.getBytes());
+            return new String(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            return input;
+        }
     }
 
 }

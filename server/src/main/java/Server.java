@@ -1,3 +1,5 @@
+import com.marta.sandbox.authentication.AuthService;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -5,6 +7,8 @@ import java.nio.file.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
+import com.marta.sandbox.authentication.*;
+import com.marta.sandbox.authentication.exceptions.*;
 
 public class Server {
 
@@ -30,8 +34,9 @@ public class Server {
                 Logger.getGlobal().warning("ATTENTION! --- NEW ROOT DIRECTORY CREATED " + ROOT);
             }
             // start authentication service
-            authService = new AuthService(ROOT.resolve(USERS_DB_NAME).toString());
-            Logger.getGlobal().info(authService.start());
+            authService = new SqliteAuthService(ROOT.resolve("users").toAbsolutePath().toString());
+            authService.start();
+            Logger.getGlobal().info("AUTHORISATION SERVICE STARTED");
             // open thread pool
             threadPool = Executors.newCachedThreadPool();
             // open server socket
@@ -47,10 +52,9 @@ public class Server {
         } catch (FileProcessorException e) {
             Logger.getGlobal().severe("ERROR INITIALIZING ROOT DIRECTORY: " + e.getMessage());
         } catch (AuthServiceException e) {
-            Logger.getGlobal().severe(e.getMessage());
+            Logger.getGlobal().severe("FATAL ERROR! FAILED TO START AUTHORISATION SERVICE. \nSERVER CLOSED");
         } catch (IOException e) {
             Logger.getGlobal().severe("ERROR CONNECTING TO SOCKET: " + e.getMessage());
-
         } finally {
             if(authService != null) authService.stop();
             if(threadPool != null) threadPool.shutdown();

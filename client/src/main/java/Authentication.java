@@ -4,6 +4,9 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import org.json.simple.JSONObject;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class Authentication implements ConnectionListener, SignInChecker {
 
     @FXML private TextField loginField;
@@ -68,8 +71,18 @@ public class Authentication implements ConnectionListener, SignInChecker {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.SIGN_IN);
         message.put(Commands.USERNAME, user);
-        message.put(Commands.PASSWORD, password);
+        message.put(Commands.PASSWORD, hash(password));
         SceneManager.getInstance().send(this, message);
+    }
+
+    private String hash (String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            digest.update(input.getBytes());
+            return new String(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            return input;
+        }
     }
 
 }

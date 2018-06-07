@@ -1,3 +1,5 @@
+import com.marta.sandbox.authentication.exceptions.DatabaseConnectionException;
+import com.marta.sandbox.authentication.exceptions.UserAlreadyExistsException;
 import org.json.simple.JSONObject;
 
 import java.io.*;
@@ -5,7 +7,6 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class ClientHandler implements ConnectionListener, FileManager, SignInChecker, SignUpChecker {
@@ -96,7 +97,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
     @Override
     public void signIn(String user, String password) {
         JSONObject message = new JSONObject();
-        if( server.getAuthService().loginAccepted(user,password)) {
+        if( server.getAuthService().isLoginAccepted(user,password)) {
             activeDirectory = activeDirectory.resolve(user);
             if (FileProcessor.fileExists(activeDirectory)) {
                 message.put(Commands.MESSAGE, Commands.ADMITTED);
@@ -117,18 +118,21 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
     @Override
     public void signUp(String user, String password) {
         JSONObject message = new JSONObject();
-        if (server.getAuthService().registerNewUser(user, password)) {
+        try {
+            server.getAuthService().registerNewUser(user, password);
             activeDirectory = SERVER_ROOT.resolve(user);
-            try {
-                FileProcessor.createDirectory(activeDirectory);
-                message.put(Commands.MESSAGE, Commands.ADMITTED);
-            } catch (FileProcessorException e) {
-                message.put(Commands.MESSAGE, Commands.FAIL);
-                message.put(Commands.FAIL_DETAILS, "Ошибка соединения. Повторите попытку позднее");
-                Logger.getGlobal().severe(session + ": FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
-            }
-        } else {
-            message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);
+            FileProcessor.createDirectory(activeDirectory);
+            message.put(Commands.MESSAGE, Commands.ADMITTED);
+        } catch (UserAlreadyExistsException e) {
+            message.put(Commands.MESSAGE, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, "Пользователь с таким именем уже существует");
+        } catch (DatabaseConnectionException e) {
+            message.put(Commands.MESSAGE, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, "Ошибка соединения. Повторите попытку позднее");
+        } catch (FileProcessorException e) {
+            message.put(Commands.MESSAGE, Commands.FAIL);
+            message.put(Commands.FAIL_DETAILS, "Ошибка соединения. Повторите попытку позднее");
+            Logger.getGlobal().severe(session + ": FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
         }
         send(message);
         //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном регистрации, а не главным
@@ -138,7 +142,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
     @Override
     public void checkNewUserName(String name) {
         JSONObject message = new JSONObject();
-        if (server.getAuthService().newUserNameAccepted(name)) {
+        if (server.getAuthService().isUserNameVacant(name)) {
             message.put(Commands.MESSAGE, Commands.USERNAME_OK);
         } else {
             message.put(Commands.MESSAGE, Commands.FAIL);
