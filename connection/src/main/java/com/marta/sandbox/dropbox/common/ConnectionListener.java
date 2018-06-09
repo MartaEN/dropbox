@@ -1,3 +1,5 @@
+package com.marta.sandbox.dropbox.common;
+
 public interface ConnectionListener {
 
     void onConnect (Session session);

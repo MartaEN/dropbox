@@ -1,3 +1,10 @@
+package com.marta.sandbox.dropbox.client.fxml;
+
+import com.marta.sandbox.dropbox.client.service.SceneManager;
+import com.marta.sandbox.dropbox.common.Commands;
+import com.marta.sandbox.dropbox.common.ConnectionListener;
+import com.marta.sandbox.dropbox.common.Session;
+import com.marta.sandbox.dropbox.common.SignInChecker;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
@@ -11,14 +18,13 @@ public class Authentication implements ConnectionListener, SignInChecker {
 
     @FXML private TextField loginField;
     @FXML private PasswordField passwordField;
-    @FXML private void initialize() {
-        JSONObject message = new JSONObject();
-        message.put(Commands.MESSAGE, Commands.TEST);
-        SceneManager.getInstance().send(this, message);
+
+    @FXML private void initialize () {
+        SceneManager.getInstance().registerListener(SceneManager.SceneType.AUTHENTICATION, this);
     }
 
     @FXML private void signIn() { signIn(loginField.getText(), passwordField.getText()); }
-    @FXML private void switchToRegistration () { SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.REGISTRATION); }
+    @FXML private void switchToRegistration () { SceneManager.getInstance().switchSceneTo(SceneManager.SceneType.REGISTRATION); }
 
     @Override
     public void onConnect(Session session) { }
@@ -34,7 +40,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
 
                 switch (cmd) {
                     case ADMITTED:
-                        SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WORK);
+                        SceneManager.getInstance().switchSceneTo(SceneManager.SceneType.WORK);
                         break;
                     case NOT_ADMITTED:
                         DialogManager.showWarning(
@@ -62,9 +68,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
     public void onDisconnect(Session session) { }
 
     @Override
-    public void onException(Session session, Exception e) {
-        SceneManager.getInstance().onException(e);
-    }
+    public void onException(Session session, Exception e) { }
 
     @Override
     public void signIn(String user, String password) {

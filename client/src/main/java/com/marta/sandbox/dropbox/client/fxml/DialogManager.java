@@ -1,3 +1,6 @@
+package com.marta.sandbox.dropbox.client.fxml;
+
+import com.marta.sandbox.dropbox.client.service.SceneManager;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -8,7 +11,7 @@ import java.io.File;
 
 public class DialogManager {
 
-    static <P> Object showWarning(String title, String message) {
+    public static <P> Object showWarning(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING, message, ButtonType.OK);
         alert.setHeaderText("");
         alert.setTitle(title);

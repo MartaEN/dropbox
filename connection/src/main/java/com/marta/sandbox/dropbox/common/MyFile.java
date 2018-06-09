@@ -1,3 +1,5 @@
+package com.marta.sandbox.dropbox.common;
+
 import java.io.Serializable;
 
 public class MyFile implements Serializable {

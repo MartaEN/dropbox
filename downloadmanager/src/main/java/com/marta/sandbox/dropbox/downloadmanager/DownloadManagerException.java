@@ -1,3 +1,5 @@
+package com.marta.sandbox.dropbox.downloadmanager;
+
 import java.io.IOException;
 
 public class DownloadManagerException extends IOException{

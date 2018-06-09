@@ -23,6 +23,10 @@ public class Server {
     public ExecutorService getThreadPool() { return threadPool; }
     public AuthService getAuthService() { return authService; }
 
+    public static void main(String[] args) {
+        new Server();
+    }
+
     Server() {
 
         try {

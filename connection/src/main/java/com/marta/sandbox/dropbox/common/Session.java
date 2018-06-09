@@ -1,3 +1,5 @@
+package com.marta.sandbox.dropbox.common;
+
 import org.json.simple.JSONObject;
 
 import java.io.*;
@@ -117,6 +119,6 @@ public class Session implements Runnable {
 
     @Override
     public String toString() {
-        return "Session: " + socket.getInetAddress() + ": " + socket.getPort();
+        return "com.marta.sandbox.dropbox.common.Session: " + socket.getInetAddress() + ": " + socket.getPort();
     }
 }

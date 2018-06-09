@@ -1,3 +1,5 @@
+package com.marta.sandbox.dropbox.common;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 

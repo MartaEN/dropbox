@@ -1,5 +1,8 @@
 import com.marta.sandbox.authentication.exceptions.DatabaseConnectionException;
 import com.marta.sandbox.authentication.exceptions.UserAlreadyExistsException;
+import com.marta.sandbox.dropbox.common.*;
+import com.marta.sandbox.dropbox.downloadmanager.DownloadManager;
+import com.marta.sandbox.dropbox.downloadmanager.DownloadManagerException;
 import org.json.simple.JSONObject;
 
 import java.io.*;
@@ -111,8 +114,7 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);
         }
         send(message);
-        //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном авторизации, а не главным
-        sendOK();
+        listFiles();
     }
 
     @Override
@@ -135,8 +137,6 @@ public class ClientHandler implements ConnectionListener, FileManager, SignInChe
             Logger.getGlobal().severe(session + ": FAIL - CANT CREATE USER DIRECTORY FOR USERNAME [" + user + "] !!!");
         }
         send(message);
-        //TODO почему-то, если не отослать еще одно сообщение, ближайшее следующее считается окном регистрации, а не главным
-        sendOK();
     }
 
     @Override

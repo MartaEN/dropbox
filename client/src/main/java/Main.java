@@ -1,3 +1,4 @@
+import com.marta.sandbox.dropbox.client.service.SceneManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -9,7 +10,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
 
         SceneManager.getInstance().init(primaryStage, new Locale("en"));
-        SceneManager.getInstance().switchSceneTo(SceneManager.Scenes.WELCOME);
+        SceneManager.getInstance().switchSceneTo(SceneManager.SceneType.AUTHENTICATION);
     }
 
 

@@ -1,3 +1,5 @@
+package com.marta.sandbox.dropbox.common;
+
 public enum Commands {
 
     MESSAGE,

@@ -1,3 +1,9 @@
+package com.marta.sandbox.dropbox.client.fxml;
+
+import com.marta.sandbox.dropbox.client.service.SceneManager;
+import com.marta.sandbox.dropbox.common.*;
+import com.marta.sandbox.dropbox.downloadmanager.DownloadManager;
+import com.marta.sandbox.dropbox.downloadmanager.DownloadManagerException;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -23,6 +29,8 @@ public class Client implements ConnectionListener, FileManager {
 
     @FXML private void initialize() {
 
+        SceneManager.getInstance().registerListener(SceneManager.SceneType.WORK, this);
+
         colType.setCellValueFactory(new PropertyValueFactory<MyFile, String>("type"));
         colName.setCellValueFactory(new PropertyValueFactory<MyFile, String>("name"));
         colSize.setCellValueFactory(new PropertyValueFactory<MyFile, String>("size"));
@@ -37,7 +45,7 @@ public class Client implements ConnectionListener, FileManager {
 
         uploads = new HashSet<>();
 
-        requestFileListUpdate();
+//        requestFileListUpdate();
     }
 
     private final Path ROOT = Paths.get("_client_downloads"); // TODO добавить возможность выбора клиентом
@@ -82,14 +90,10 @@ public class Client implements ConnectionListener, FileManager {
     }
 
     @Override
-    public void onDisconnect(Session session) {
-        SceneManager.getInstance().logout();
-    }
+    public void onDisconnect(Session session) { }
 
     @Override
-    public void onException(Session session, Exception e) {
-        SceneManager.getInstance().onException(e);
-    }
+    public void onException(Session session, Exception e) { }
 
     @FXML
     private void uploadFile() {
