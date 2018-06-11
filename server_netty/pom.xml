@@ -9,8 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>server</artifactId>
+    <artifactId>server-netty</artifactId>
+
     <dependencies>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.25.Final</version>
+        </dependency>
         <dependency>
             <groupId>com.marta</groupId>
             <artifactId>authentication</artifactId>
@@ -18,20 +24,14 @@
         </dependency>
         <dependency>
             <groupId>com.marta</groupId>
-            <artifactId>fileprocessor</artifactId>
+            <artifactId>common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.marta</groupId>
-            <artifactId>downloadmanager</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.marta</groupId>
-            <artifactId>connection</artifactId>
+            <artifactId>server_dispatcher</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
-
 
 </project>

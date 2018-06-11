@@ -1,7 +1,12 @@
 package com.marta.sandbox.dropbox.client.fxml;
 
 import com.marta.sandbox.dropbox.client.service.SceneManager;
-import com.marta.sandbox.dropbox.common.*;
+import com.marta.sandbox.dropbox.common.api.FileManager;
+import com.marta.sandbox.dropbox.common.messaging.Commands;
+import com.marta.sandbox.dropbox.common.messaging.MyFile;
+import com.marta.sandbox.dropbox.common.messaging.MyFileList;
+import com.marta.sandbox.dropbox.common.session.ConnectionListener;
+import com.marta.sandbox.dropbox.common.session.Session;
 import com.marta.sandbox.dropbox.downloadmanager.DownloadManager;
 import com.marta.sandbox.dropbox.downloadmanager.DownloadManagerException;
 import javafx.application.Platform;

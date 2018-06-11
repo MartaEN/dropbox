@@ -25,13 +25,14 @@
         </plugins>
     </build>
     <modules>
-        <module>client</module>
-        <module>connection</module>
-        <module>server</module>
-        <module>fileprocessor</module>
+        <module>common</module>
+        <module>server_basic</module>
+        <module>server_netty</module>
+        <module>server_dispatcher</module>
         <module>authentication</module>
-        <module>client</module>
+        <module>fileprocessor</module>
         <module>downloadmanager</module>
+        <module>client</module>
     </modules>
 
     <properties>

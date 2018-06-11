@@ -4,8 +4,8 @@ import com.marta.sandbox.dropbox.client.fxml.Authentication;
 import com.marta.sandbox.dropbox.client.fxml.Client;
 import com.marta.sandbox.dropbox.client.fxml.DialogManager;
 import com.marta.sandbox.dropbox.client.fxml.Registration;
-import com.marta.sandbox.dropbox.common.ConnectionListener;
-import com.marta.sandbox.dropbox.common.Session;
+import com.marta.sandbox.dropbox.common.session.ConnectionListener;
+import com.marta.sandbox.dropbox.common.session.Session;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -142,7 +142,7 @@ public class SceneManager implements ConnectionListener {
     }
 
     public void sendFile (File file) {
-        session.sendFile(file);
+        session.sendFileInChunks(file);
     }
 
     public void logout () {

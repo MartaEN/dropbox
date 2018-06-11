@@ -1,10 +1,10 @@
 package com.marta.sandbox.dropbox.client.fxml;
 
 import com.marta.sandbox.dropbox.client.service.SceneManager;
-import com.marta.sandbox.dropbox.common.Commands;
-import com.marta.sandbox.dropbox.common.ConnectionListener;
-import com.marta.sandbox.dropbox.common.Session;
-import com.marta.sandbox.dropbox.common.SignUpChecker;
+import com.marta.sandbox.dropbox.common.messaging.Commands;
+import com.marta.sandbox.dropbox.common.session.ConnectionListener;
+import com.marta.sandbox.dropbox.common.session.Session;
+import com.marta.sandbox.dropbox.common.api.SignUpChecker;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
