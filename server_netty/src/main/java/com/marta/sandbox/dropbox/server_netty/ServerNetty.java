@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 public class ServerNetty implements ServerConstants {
 
     private final Path ROOT = Paths.get("_server_repository");
+    private final String USER_DATABASE_NAME = "users.db";
     private AuthService authService;
 
     private void run() {
@@ -48,7 +49,7 @@ public class ServerNetty implements ServerConstants {
 
         // Шаг 2: Запускаем службу авторизации
         try {
-            authService = new SqliteAuthService(ROOT.resolve("users").toAbsolutePath().toString());
+            authService = new SqliteAuthService(ROOT.resolve(USER_DATABASE_NAME).toAbsolutePath().toString());
             authService.start();
             Logger.getGlobal().info("AUTHORISATION SERVICE STARTED");
         } catch (AuthServiceException e) {
@@ -63,12 +64,11 @@ public class ServerNetty implements ServerConstants {
             ServerBootstrap b = new ServerBootstrap();
             b.group(mainGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-//                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         protected void initChannel(SocketChannel socketChannel) {
                             socketChannel.pipeline().addLast(
-                                    new ObjectEncoder(),
                                     new ObjectDecoder(MAX_OBJ_SIZE, ClassResolvers.cacheDisabled(null)),
+                                    new ObjectEncoder(),
                                     new ClientHandler(ROOT.toAbsolutePath(), authService)
                             );
                         }
@@ -76,6 +76,7 @@ public class ServerNetty implements ServerConstants {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
+            Logger.getGlobal().info("SERVER STARTED");
             ChannelFuture future = b.bind(ServerConstants.PORT).sync();
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {

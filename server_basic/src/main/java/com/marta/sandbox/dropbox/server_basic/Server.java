@@ -1,4 +1,4 @@
-package com.marta.sandbox.dropbox.server;
+package com.marta.sandbox.dropbox.server_basic;
 
 import com.marta.sandbox.authentication.AuthService;
 
@@ -12,11 +12,11 @@ import java.util.logging.Logger;
 import com.marta.sandbox.authentication.*;
 import com.marta.sandbox.authentication.exceptions.*;
 import com.marta.sandbox.dropbox.common.settings.ServerConstants;
-import com.marta.sandbox.file_helper.*;
 
 public class Server implements ServerConstants {
 
     private final Path ROOT = Paths.get("_server_repository");
+    private final String USER_DATABASE_NAME = "users.db";
 
     private ServerSocket serverSocket;
     private ExecutorService threadPool;
@@ -32,34 +32,41 @@ public class Server implements ServerConstants {
 
     Server() {
 
-        try {
-            // check root directory
-            if(FileProcessor.fileExists(ROOT)) {
-                Logger.getGlobal().info("ROOT DIRECTORY " + ROOT);
-            } else {
-                FileProcessor.createDirectory(ROOT);
+        // Для хранения файлов на сервере выделяем директорию.
+        // В ней будет лежать файл базы данных пользователей для сервиса авторизации
+        // и файлы пользователей, разложенные по папкам с именами логинов.
+        // Шаг 1: проверяем наличие папки на сети, при отсутствии - создаем.
+        if(Files.exists(ROOT, LinkOption.NOFOLLOW_LINKS)) {
+            Logger.getGlobal().info("ROOT DIRECTORY " + ROOT);
+        } else {
+            try {
+                Files.createDirectory(ROOT);
                 Logger.getGlobal().warning("ATTENTION! --- NEW ROOT DIRECTORY CREATED " + ROOT);
+            } catch (IOException e) {
+                Logger.getGlobal().severe("FATAL ERROR! FAILED TO CREATE ROOT DIRECTORY. \nSERVER CLOSED");
+                return;
             }
-            // start authentication service
-            authService = new SqliteAuthService(ROOT.resolve("users").toAbsolutePath().toString());
+        }
+
+        // Шаг 2: Запускаем службу авторизации
+        try {
+            authService = new SqliteAuthService(ROOT.resolve(USER_DATABASE_NAME).toAbsolutePath().toString());
             authService.start();
             Logger.getGlobal().info("AUTHORISATION SERVICE STARTED");
-            // open thread pool
-            threadPool = Executors.newCachedThreadPool();
-            // open server socket
-            serverSocket = new ServerSocket(PORT);
-            // ready
-            Logger.getGlobal().info("SERVER STARTED");
+        } catch (AuthServiceException e) {
+            Logger.getGlobal().severe("FATAL ERROR! FAILED TO START AUTHORISATION SERVICE. \nSERVER CLOSED");
+            return;
+        }
 
+        // Шаг 3: Открываем пул потоков и запускаем сервер
+        try {
+            threadPool = Executors.newCachedThreadPool();
+            serverSocket = new ServerSocket(PORT);
+            Logger.getGlobal().info("SERVER STARTED");
             while (true) {
                 Socket socket = serverSocket.accept();
                 new ClientHandler(this, socket);
             }
-
-        } catch (FileProcessorException e) {
-            Logger.getGlobal().severe("ERROR INITIALIZING ROOT DIRECTORY: " + e.getMessage());
-        } catch (AuthServiceException e) {
-            Logger.getGlobal().severe("FATAL ERROR! FAILED TO START AUTHORISATION SERVICE. \nSERVER CLOSED");
         } catch (IOException e) {
             Logger.getGlobal().severe("ERROR CONNECTING TO SOCKET: " + e.getMessage());
         } finally {

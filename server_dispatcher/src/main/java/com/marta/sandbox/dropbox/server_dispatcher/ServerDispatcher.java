@@ -13,18 +13,20 @@ import com.marta.sandbox.file_helper.FileProcessorException;
 import org.json.simple.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ServerDispatcher {
 
     private final AuthService AUTH_SERVICE;
     private final Path SERVER_DIRECTORY; // нужна, чтобы знать, куда пользователя уже не пускать
     private Path currentDirectory; // нужна, чтобы знать, в какой серверной папке работает пользователь
-    private String login;
-    private boolean isAuth;
+    private String login; // заведено про запас, пока не используется
+    private boolean isAuth; // заведено про запас, пока не используется
 
     public ServerDispatcher (Path serverDirectory, AuthService authService) {
         this.AUTH_SERVICE = authService;
@@ -94,6 +96,8 @@ public class ServerDispatcher {
         if( AUTH_SERVICE.isLoginAccepted(user,password)) {
             currentDirectory = currentDirectory.resolve(user);
             if (FileProcessor.fileExists(currentDirectory)) {
+                this.login = user;
+                this.isAuth = true;
                 message.put(Commands.MESSAGE, Commands.ADMITTED);
             } else {
                 message.put(Commands.MESSAGE, Commands.FAIL);
@@ -105,15 +109,17 @@ public class ServerDispatcher {
             message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);
         }
         sender.send(message);
-        listFiles(sender);
+//        listFiles(sender);
     }
 
-    public void signUp(Sender sender, String user, String password) {
+    private void signUp(Sender sender, String user, String password) {
         JSONObject message = new JSONObject();
         try {
             AUTH_SERVICE.registerNewUser(user, password);
             currentDirectory = SERVER_DIRECTORY.resolve(user);
             FileProcessor.createDirectory(currentDirectory);
+            this.login = user;
+            this.isAuth = true;
             message.put(Commands.MESSAGE, Commands.ADMITTED);
         } catch (UserAlreadyExistsException e) {
             message.put(Commands.MESSAGE, Commands.FAIL);
@@ -211,13 +217,12 @@ public class ServerDispatcher {
 
     private void listFiles (Sender sender) {
 
-        ArrayList<MyFile> fileList = new ArrayList<>();
-
-        for (File f: new File(currentDirectory.toString()).listFiles()) {
-            fileList.add(new MyFile(f.isFile()? MyFile.FileType.FILE: MyFile.FileType.DIR,
-                    f.getName(), (int)f.length()/1024));
+        List<MyFile> fileList = null;
+        try {
+            fileList = Files.list(currentDirectory).map(MyFile::new).collect(Collectors.toList());
+        } catch ( IOException e) {
+            //exception ignored - null list to be returned in case of exception
         }
-
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.FILE_LIST);
         message.put(Commands.FILE_LIST, new MyFileList(fileList));

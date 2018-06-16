@@ -1,4 +1,4 @@
-package com.marta.sandbox.dropbox.server;
+package com.marta.sandbox.dropbox.server_basic;
 
 import com.marta.sandbox.dropbox.common.session.ConnectionListener;
 import com.marta.sandbox.dropbox.common.session.Session;
@@ -12,7 +12,7 @@ public class ClientHandler implements ConnectionListener {
     private final ServerDispatcher SERVER_DISPATCHER;
 
     ClientHandler(Server server, Socket socket) {
-        Session session = new Session(this, socket, Session.SessionType.SERVER);
+        Session session = new Session(this, socket);
         server.getThreadPool().execute(session);
         this.SERVER_DISPATCHER = new ServerDispatcher(server.getServerDirectory(), server.getAuthService());
     }

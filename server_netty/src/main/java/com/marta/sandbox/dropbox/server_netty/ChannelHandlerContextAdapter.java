@@ -39,8 +39,9 @@ public class ChannelHandlerContextAdapter implements ServerConstants, Sender {
                         message.put(Commands.BYTES_LEFT, size-=bytesRead);
                         if(bytesRead == buffer.length) message.put (Commands.DATA, buffer);
                         else message.put (Commands.DATA, Arrays.copyOf(buffer,bytesRead));
-                        send(message);
+                        ctx.write(message);
                     }
+                    ctx.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

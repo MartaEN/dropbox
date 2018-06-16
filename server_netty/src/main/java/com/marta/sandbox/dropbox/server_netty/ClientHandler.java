@@ -4,8 +4,6 @@ import com.marta.sandbox.authentication.AuthService;
 import com.marta.sandbox.dropbox.server_dispatcher.ServerDispatcher;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import org.json.simple.JSONObject;
-
 
 import java.net.InetAddress;
 import java.nio.file.Path;
