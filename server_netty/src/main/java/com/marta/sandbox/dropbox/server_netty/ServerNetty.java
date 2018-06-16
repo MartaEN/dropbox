@@ -79,8 +79,8 @@ public class ServerNetty implements ServerConstants {
             Logger.getGlobal().info("SERVER STARTED");
             ChannelFuture future = b.bind(ServerConstants.PORT).sync();
             future.channel().closeFuture().sync();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Logger.getGlobal().severe("FAILED TO START SERVER: " + e.getMessage() + "\nSERVER STOPPED");
         } finally {
             mainGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();

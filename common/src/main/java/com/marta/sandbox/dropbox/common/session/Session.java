@@ -55,6 +55,8 @@ public class Session implements Runnable, Sender {
     }
 
     public void sendFileInChunks(File file) {
+
+        // TODO перестало работать с разбиением на куски, отсылает только если кусок один (файл меньше 1 Мб)
         Thread t = new Thread (() -> {
             System.out.println(this + ": sending "+file.getName());
             try (InputStream input = new BufferedInputStream(new FileInputStream(file), BUFFER_SIZE)) {

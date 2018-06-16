@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.HashMap;
 
+// класс-синглтон для управления загрузками (не рассчитанный на асинхронную передачу данных)
 public class DownloadManager {
 
     private HashMap <File, Stats> downloads;
@@ -22,12 +23,14 @@ public class DownloadManager {
         }
     }
 
-    private static final DownloadManager thisInstance = new DownloadManager();
-
+    private static DownloadManager thisInstance;
     private DownloadManager () { this.downloads = new HashMap<>(); }
+    public static DownloadManager getInstance () {
+        if (thisInstance == null) thisInstance = new DownloadManager();
+        return thisInstance;
+    }
 
-    public static DownloadManager getInstance () { return thisInstance; }
-
+    // метод регистрирует файл к загрузке и создает в указанной директории пустой файл, разрешая возможный конфликт имён
     public void enlistDownload (Path destinationDirectory, File file) throws DownloadManagerException {
 
         if(downloads.containsKey(file)) throw new DownloadManagerException("File already being downloaded");
@@ -45,14 +48,18 @@ public class DownloadManager {
                     + destinationDirectory.resolve(newName).toString() + ", size: " + file.length());
             downloads.put(file, new Stats(newFile, file.length()));
         } catch (IOException e) {
+            e.printStackTrace();
             throw new DownloadManagerException(e);
         }
     }
 
+    // Метод сохраняет полученные данные - для уже зарегистрированных файлов
     public void download (File file, int sequence, byte[] data) throws DownloadManagerException {
 
+        // данные не обрабатываются, если файл не зарегистрирован для загрузки
         if(!downloads.containsKey(file)) return;
 
+        // в случае, если порядок частей нарушен - файл удаляется, выбрасывается исключение
         if(sequence != downloads.get(file).sequence + 1) {
             downloads.get(file).targetFile.delete();
             downloads.remove(file);

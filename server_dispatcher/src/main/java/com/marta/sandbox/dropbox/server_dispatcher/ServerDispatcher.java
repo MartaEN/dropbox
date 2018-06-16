@@ -109,7 +109,6 @@ public class ServerDispatcher {
             message.put(Commands.MESSAGE, Commands.NOT_ADMITTED);
         }
         sender.send(message);
-//        listFiles(sender);
     }
 
     private void signUp(Sender sender, String user, String password) {

@@ -1,6 +1,5 @@
 package com.marta.sandbox.dropbox.common.messaging;
 
-import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Path;
 
