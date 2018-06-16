@@ -1,7 +1,5 @@
 package com.marta.sandbox.dropbox.common.session;
 
-import com.marta.sandbox.dropbox.common.session.Session;
-
 public interface ConnectionListener {
 
     void onConnect (Session session);

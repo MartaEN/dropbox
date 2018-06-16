@@ -1,6 +1,8 @@
 package com.marta.sandbox.dropbox.common.messaging;
 
+import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
 
 public class MyFile implements Serializable {
 
@@ -18,10 +20,12 @@ public class MyFile implements Serializable {
         }
     }
 
-    public MyFile(FileType type, String name, int size) {
-        this.type = type;
-        this.name = name;
-        this.size = size;
+    public MyFile (Path path) {
+        if (path.toFile().exists()) {
+            this.type = path.toFile().isDirectory() ? FileType.DIR : FileType.FILE;
+            this.name = path.getFileName().toString();
+            this.size = (int) (path.toFile().length() / 1024);
+        }
     }
 
     public FileType getType() {

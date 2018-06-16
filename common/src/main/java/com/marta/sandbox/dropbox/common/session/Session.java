@@ -7,42 +7,24 @@ import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
+
 import java.util.Arrays;
 
 public class Session implements Runnable, Sender {
 
     private final Socket socket;
     private ConnectionListener connectionListener;
-    private final int BUFFER_SIZE = (int)Math.pow(2,20);
+    private final int BUFFER_SIZE = 1024 * 1024;
 
     private ObjectDecoderInputStream in;
     private ObjectEncoderOutputStream out;
 
-
-    public enum SessionType {
-        SERVER, CLIENT
-    }
-
-
-    public void setConnectionListener (ConnectionListener listener) {
-        this.connectionListener = listener;
-    }
-
-    public Session (ConnectionListener connectionListener, Socket socket, SessionType type) {
+    public Session (ConnectionListener connectionListener, Socket socket) {
         this.socket = socket;
         this.connectionListener = connectionListener;
         try {
-            switch (type) {
-                // different for server and client int order to avoid deadlock
-                case SERVER:
-                    in = new ObjectDecoderInputStream(socket.getInputStream());
-                    out = new ObjectEncoderOutputStream(socket.getOutputStream());
-                    break;
-                case CLIENT:
-                    out = new ObjectEncoderOutputStream(socket.getOutputStream());
-                    in = new ObjectDecoderInputStream(socket.getInputStream());
-                    break;
-            }
+            in = new ObjectDecoderInputStream(socket.getInputStream());
+            out = new ObjectEncoderOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -50,7 +32,6 @@ public class Session implements Runnable, Sender {
 
     @Override
     public void run () {
-
         try {
             connectionListener.onConnect(this);
             while (!Thread.currentThread().isInterrupted()) {
@@ -59,18 +40,11 @@ public class Session implements Runnable, Sender {
         } catch (IOException | ClassNotFoundException e) {
             connectionListener.onException(this, e);
             disconnect();
-        } finally {
-            connectionListener.onDisconnect(this);
         }
     }
 
     public synchronized <T> void send (T object) {
         System.out.println(this + ": sending "+object);
-        try {
-            Thread.sleep(500); //TODO заглушка, чтобы сообщение не отправлялось раньше запуска метода run()
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         try {
             out.writeObject(object);
             out.flush();
@@ -99,13 +73,15 @@ public class Session implements Runnable, Sender {
                     send(message);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                connectionListener.onException(this, e);
+                disconnect();
             }
         });
         t.start();
     }
 
-    public synchronized void disconnect() {
+    private synchronized void disconnect() {
+        connectionListener.onDisconnect(this);
         Thread.currentThread().interrupt();
         try {
             in.close();
