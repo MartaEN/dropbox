@@ -10,21 +10,11 @@ public class DropboxClient extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-
         SceneManager.getInstance().init(primaryStage, new Locale("en"));
         SceneManager.getInstance().switchSceneTo(SceneManager.SceneType.AUTHENTICATION);
-    }
-
-
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-        SceneManager.getInstance().disconnect();
     }
 
     public static void main(String[] args) {
         launch(args);
     }
-
-
 }

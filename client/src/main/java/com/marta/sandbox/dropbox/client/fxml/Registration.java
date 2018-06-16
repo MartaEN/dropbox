@@ -1,10 +1,7 @@
 package com.marta.sandbox.dropbox.client.fxml;
 
-import com.marta.sandbox.dropbox.client.service.SceneManager;
+import com.marta.sandbox.dropbox.client.service.*;
 import com.marta.sandbox.dropbox.common.messaging.Commands;
-import com.marta.sandbox.dropbox.common.session.ConnectionListener;
-import com.marta.sandbox.dropbox.common.session.Session;
-import com.marta.sandbox.dropbox.common.api.SignUpChecker;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -13,7 +10,7 @@ import org.json.simple.JSONObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Registration implements ConnectionListener, SignUpChecker {
+public class Registration implements InputListener {
 
     @FXML private TextField username;
     @FXML private TextField password;
@@ -25,11 +22,7 @@ public class Registration implements ConnectionListener, SignUpChecker {
 
     @FXML private void switchToAuthentication () { SceneManager.getInstance().switchSceneTo(SceneManager.SceneType.AUTHENTICATION); }
 
-    @Override
-    public void onConnect(Session session) { }
-
-    @Override
-    public void onInput(Session session, Object input) {
+    public void onInput(Object input) {
 
         Platform.runLater(()-> {
 
@@ -65,13 +58,6 @@ public class Registration implements ConnectionListener, SignUpChecker {
         });
     }
 
-    @Override
-    public void onDisconnect(Session session) { }
-
-    @Override
-    public void onException(Session session, Exception e) { }
-
-
     @FXML
     private void checkNewUserName() {
         if (isUsernameOK(username.getText())) {
@@ -85,12 +71,11 @@ public class Registration implements ConnectionListener, SignUpChecker {
     }
 
 
-    @Override
     public void checkNewUserName(String name) {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.CHECK_NEW_USER_NAME);
         message.put(Commands.USERNAME, name);
-        SceneManager.getInstance().send(this, message);
+        NetworkManager.getInstance().send(message);
     }
 
     @FXML
@@ -112,17 +97,12 @@ public class Registration implements ConnectionListener, SignUpChecker {
                     SceneManager.translate("message.sign-up-password-repeat"));
             password1.clear();
         } else {
-            signUp(username.getText(), password.getText());
+            JSONObject message = new JSONObject();
+            message.put(Commands.MESSAGE, Commands.SIGN_UP);
+            message.put(Commands.USERNAME, username.getText());
+            message.put(Commands.PASSWORD, hash(password.getText()));
+            NetworkManager.getInstance().send(message);
         }
-    }
-
-    @Override
-    public void signUp(String user, String password) {
-        JSONObject message = new JSONObject();
-        message.put(Commands.MESSAGE, Commands.SIGN_UP);
-        message.put(Commands.USERNAME, user);
-        message.put(Commands.PASSWORD, hash(password));
-        SceneManager.getInstance().send(this, message);
     }
 
     @FXML private void checkPassword () {

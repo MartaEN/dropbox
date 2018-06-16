@@ -1,12 +1,9 @@
 package com.marta.sandbox.dropbox.client.fxml;
 
-import com.marta.sandbox.dropbox.client.service.SceneManager;
-import com.marta.sandbox.dropbox.common.api.FileManager;
+import com.marta.sandbox.dropbox.client.service.*;
 import com.marta.sandbox.dropbox.common.messaging.Commands;
 import com.marta.sandbox.dropbox.common.messaging.MyFile;
 import com.marta.sandbox.dropbox.common.messaging.MyFileList;
-import com.marta.sandbox.dropbox.common.session.ConnectionListener;
-import com.marta.sandbox.dropbox.common.session.Session;
 import com.marta.sandbox.dropbox.downloadmanager.DownloadManager;
 import com.marta.sandbox.dropbox.downloadmanager.DownloadManagerException;
 import javafx.application.Platform;
@@ -21,7 +18,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.HashSet;
 
-public class Client implements ConnectionListener, FileManager {
+public class Client implements InputListener {
 
     @FXML private Button btnDelete;
     @FXML private Button btnRename;
@@ -50,16 +47,12 @@ public class Client implements ConnectionListener, FileManager {
 
         uploads = new HashSet<>();
 
-//        requestFileListUpdate();
     }
 
     private final Path ROOT = Paths.get("_client_downloads"); // TODO добавить возможность выбора клиентом
 
     @Override
-    public void onConnect(Session session) { }
-
-    @Override
-    public void onInput(Session session, Object input) {
+    public void onInput(Object input) {
 
         Platform.runLater(()-> {
             if (input instanceof JSONObject) {
@@ -94,12 +87,6 @@ public class Client implements ConnectionListener, FileManager {
         });
     }
 
-    @Override
-    public void onDisconnect(Session session) { }
-
-    @Override
-    public void onException(Session session, Exception e) { }
-
     @FXML
     private void uploadFile() {
 
@@ -129,32 +116,27 @@ public class Client implements ConnectionListener, FileManager {
         }
 
         uploads.add(file);
-        uploadFile(file);
-
-    }
-
-    @Override
-    public void uploadFile (File file) {
-        SceneManager.getInstance().sendFile(file);
+        NetworkManager.getInstance().sendFile(file);
         requestFileListUpdate();
+
     }
 
     @FXML private void downloadFile () {
         MyFile selectedFile = table.getSelectionModel().getSelectedItem();
         if (selectedFile == null) return;
+
         downloadFile(selectedFile.getName());
     }
 
-    @Override
-    public void downloadFile(String fileName) {
+    private void downloadFile(String fileName) {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.DOWNLOAD);
         message.put(Commands.FILE_NAME, fileName);
-        SceneManager.getInstance().send(this,message);
+        NetworkManager.getInstance().send(message);
     }
 
-    @Override
-    public void saveFile(File file, int sequence, long bytesLeft, byte[] data) {
+
+    private void saveFile(File file, int sequence, long bytesLeft, byte[] data) {
 
         System.out.println("Downloading "+file.getName() +": package no "+sequence+", bytes left: "+ bytesLeft);
 
@@ -163,7 +145,6 @@ public class Client implements ConnectionListener, FileManager {
             DownloadManager.getInstance().download(file, sequence, data);
         } catch (DownloadManagerException e) {
             DialogManager.showWarning(SceneManager.translate("title.download"), e.getMessage());
-            return;
         }
     }
 
@@ -176,35 +157,30 @@ public class Client implements ConnectionListener, FileManager {
         if(selectedFile == null) return;
 
         String title;
-        String message;
+        String messageText;
         String errorMessage;
 
         if (selectedFile.getType() == MyFile.FileType.FILE) {
             title = SceneManager.translate("title.rename-file") + " " + selectedFile.getName();
-            message = SceneManager.translate("prompt.new-file-name");
+            messageText = SceneManager.translate("prompt.new-file-name");
             errorMessage = SceneManager.translate("error.file-name");
         } else {
             title = SceneManager.translate("title.rename-directory") + " " + selectedFile.getName();
-            message = SceneManager.translate("prompt.new-directory-name");
+            messageText = SceneManager.translate("prompt.new-directory-name");
             errorMessage = SceneManager.translate("error.directory-name");
         }
 
-        String newName = DialogManager.getInput(title, message);
+        String newName = DialogManager.getInput(title, messageText);
 
         if (fileNameIsValid(newName)) {
-            rename(selectedFile.getName(), newName);
+            JSONObject message = new JSONObject();
+            message.put(Commands.MESSAGE, Commands.RENAME);
+            message.put(Commands.FILE_NAME, selectedFile.getName());
+            message.put(Commands.NEW_FILE_NAME, newName);
+            NetworkManager.getInstance().send(message);
         } else {
             DialogManager.showWarning(title, errorMessage);
         }
-    }
-
-    @Override
-    public void rename(String oldName, String newName) {
-        JSONObject message = new JSONObject();
-        message.put(Commands.MESSAGE, Commands.RENAME);
-        message.put(Commands.FILE_NAME, oldName);
-        message.put(Commands.NEW_FILE_NAME, newName);
-        SceneManager.getInstance().send(this, message);
     }
 
     @FXML
@@ -215,7 +191,7 @@ public class Client implements ConnectionListener, FileManager {
         if(selectedFile == null) return;
 
         String title;
-        String message = SceneManager.translate("action.delete") + " " + selectedFile.getName()+"?";
+        String messageText = SceneManager.translate("action.delete") + " " + selectedFile.getName()+"?";
 
         if(selectedFile.getType() == MyFile.FileType.FILE) {
             title = SceneManager.translate("title.delete-file");
@@ -223,15 +199,12 @@ public class Client implements ConnectionListener, FileManager {
             title = SceneManager.translate("title.delete-directory");
         }
 
-        if (DialogManager.reconfirmed(title, message)) delete(selectedFile.getName());
-    }
-
-    @Override
-    public void delete(String name) {
-        JSONObject message = new JSONObject();
-        message.put(Commands.MESSAGE, Commands.DELETE);
-        message.put(Commands.FILE_NAME, name);
-        SceneManager.getInstance().send(this, message);
+        if (DialogManager.reconfirmed(title, messageText)) {
+            JSONObject message = new JSONObject();
+            message.put(Commands.MESSAGE, Commands.DELETE);
+            message.put(Commands.FILE_NAME, selectedFile.getName());
+            NetworkManager.getInstance().send(message);
+        }
     }
 
 
@@ -239,44 +212,39 @@ public class Client implements ConnectionListener, FileManager {
     private void createDirectory () {
 
         String title = SceneManager.translate("action.new-folder");
-        String message = SceneManager.translate("prompt.new-folder");
+        String messageText = SceneManager.translate("prompt.new-folder");
         String errorMessage = SceneManager.translate("error.directory-name");
 
-        String newDirectory = DialogManager.getInput(title, message);
+        String newDirectory = DialogManager.getInput(title, messageText);
 
         if (fileNameIsValid(newDirectory)) {
-            createDirectory(newDirectory);
+            JSONObject message = new JSONObject();
+            message.put(Commands.MESSAGE, Commands.CREATE_DIRECTORY);
+            message.put(Commands.DIRECTORY_NAME, newDirectory);
+            NetworkManager.getInstance().send(message);
         } else {
             DialogManager.showWarning(title, errorMessage);
         }
     }
 
-    @Override
-    public void createDirectory (String name) {
-        JSONObject message = new JSONObject();
-        message.put(Commands.MESSAGE, Commands.CREATE_DIRECTORY);
-        message.put(Commands.DIRECTORY_NAME, name);
-        SceneManager.getInstance().send(this, message);
-    }
 
     @FXML
-    @Override
     public void directoryUp() {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.DIRECTORY_UP);
-        SceneManager.getInstance().send(this, message);
+        NetworkManager.getInstance().send(message);
     }
 
-    @Override
-    public void directoryDown(String directoryName) {
+
+    private void directoryDown(String directoryName) {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.DIRECTORY_DOWN);
         message.put(Commands.DIRECTORY_NAME, directoryName);
-        SceneManager.getInstance().send(this, message);
+        NetworkManager.getInstance().send(message);
     }
 
-    @Override
-    public void listFiles (MyFileList input) {
+
+    private void listFiles (MyFileList input) {
         table.setItems(FXCollections.observableArrayList(input.getFileList()));
     }
 
@@ -306,7 +274,7 @@ public class Client implements ConnectionListener, FileManager {
     private void requestFileListUpdate() {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.LIST_CONTENTS);
-        SceneManager.getInstance().send(this, message);
+        NetworkManager.getInstance().send(message);
     }
 
     private boolean fileNameIsValid (String fileName) {

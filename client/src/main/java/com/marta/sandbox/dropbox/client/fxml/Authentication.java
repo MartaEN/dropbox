@@ -1,10 +1,7 @@
 package com.marta.sandbox.dropbox.client.fxml;
 
-import com.marta.sandbox.dropbox.client.service.SceneManager;
+import com.marta.sandbox.dropbox.client.service.*;
 import com.marta.sandbox.dropbox.common.messaging.Commands;
-import com.marta.sandbox.dropbox.common.session.ConnectionListener;
-import com.marta.sandbox.dropbox.common.session.Session;
-import com.marta.sandbox.dropbox.common.api.SignInChecker;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
@@ -14,7 +11,7 @@ import org.json.simple.JSONObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Authentication implements ConnectionListener, SignInChecker {
+public class Authentication implements InputListener {
 
     @FXML private TextField loginField;
     @FXML private PasswordField passwordField;
@@ -27,10 +24,7 @@ public class Authentication implements ConnectionListener, SignInChecker {
     @FXML private void switchToRegistration () { SceneManager.getInstance().switchSceneTo(SceneManager.SceneType.REGISTRATION); }
 
     @Override
-    public void onConnect(Session session) { }
-
-    @Override
-    public void onInput(Session session, Object input) {
+    public void onInput(Object input) {
 
         Platform.runLater(()-> {
             if (input instanceof JSONObject) {
@@ -64,19 +58,12 @@ public class Authentication implements ConnectionListener, SignInChecker {
         });
     }
 
-    @Override
-    public void onDisconnect(Session session) { }
-
-    @Override
-    public void onException(Session session, Exception e) { }
-
-    @Override
     public void signIn(String user, String password) {
         JSONObject message = new JSONObject();
         message.put(Commands.MESSAGE, Commands.SIGN_IN);
         message.put(Commands.USERNAME, user);
         message.put(Commands.PASSWORD, hash(password));
-        SceneManager.getInstance().send(this, message);
+        NetworkManager.getInstance().send(message);
     }
 
     private String hash (String input) {
